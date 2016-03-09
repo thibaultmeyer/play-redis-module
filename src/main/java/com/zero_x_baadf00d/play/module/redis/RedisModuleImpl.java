@@ -100,7 +100,7 @@ public class RedisModuleImpl implements RedisModule {
             poolConfig.setMinIdle(redisConnMinIdle > 0 ? redisConnMinIdle : 1);
             poolConfig.setMaxIdle(redisConnMaxIdle > 0 ? redisConnMaxIdle : 1);
             poolConfig.setMaxTotal(redisConnTotal > 0 ? redisConnTotal : 1);
-            if (redisPassword != null) {
+            if (redisPassword != null && redisPassword.length() > 0) {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout, redisPassword);
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);

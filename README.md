@@ -19,7 +19,21 @@ Redis module for Play Framework 2
 
 #### application.conf
 
+    # Play Modules
+    # ~~~~~
     play.modules.enabled += "com.zero_x_baadf00d.play.module.redis.RedisModuleBinder"
+
+
+    # Play Redis Module
+    # ~~~~~
+    redis.default.host          = "127.0.0.1"
+    redis.default.port          = 6379
+    redis.default.password      = "your-password"
+    redis.default.db.default    = 0
+    redis.default.conn.timeout  = 0
+    redis.default.conn.maxtotal = 256
+    redis.default.conn.maxidle  = 32
+    redis.default.conn.minidle  = 8
 
 
 
