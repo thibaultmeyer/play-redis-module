@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.03.09
+ * @version 16.03.31
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -26,10 +26,13 @@ public interface RedisModule {
     /**
      * Retrieves an object by key.
      *
-     * @return object
+     * @param key   Item key
+     * @param clazz The object type
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @return object or {@code null}
      * @since 16.03.09
      */
-    <T> T get(final String key);
+    <T> T get(final String key, final Class<T> clazz);
 
     /**
      * Sets a value without expiration.
@@ -55,23 +58,27 @@ public interface RedisModule {
      * Callable function. The value has no expiration.
      *
      * @param key   Item key
+     * @param clazz Object type
      * @param block block returning value to set if key does not exist
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @return value
-     * @since 16.03.09
+     * @since 16.03.31
      */
-    <T> T getOrElse(final String key, final Callable<T> block);
+    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block);
 
     /**
      * Retrieve a value from the cache, or set it from a default
      * Callable function.
      *
      * @param key        Item key
+     * @param clazz      Object type
      * @param block      block returning value to set if key does not exist
      * @param expiration expiration period in seconds
+     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
      * @return value
-     * @since 16.03.09
+     * @since 16.03.31
      */
-    <T> T getOrElse(final String key, final Callable<T> block, final int expiration);
+    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration);
 
     /**
      * Removes a value from the cache.

@@ -1,24 +1,24 @@
 package com.zero_x_baadf00d.play.module.redis;
 
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.F;
+import play.libs.Json;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.*;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.03.09
+ * @version 16.03.31
  * @see RedisModule
  * @since 16.03.09
  */
@@ -82,7 +82,8 @@ public class RedisModuleImpl implements RedisModule {
     /**
      * Build a basic instance with injected dependency.
      *
-     * @param lifecycle The current application lifecyle
+     * @param lifecycle     The current application lifecyle
+     * @param configuration The current application configuration
      * @since 16.03.09
      */
     @Inject
@@ -126,7 +127,7 @@ public class RedisModuleImpl implements RedisModule {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T get(final String key) {
+    public <T> T get(final String key, final Class<T> clazz) {
         T object = null;
         try {
             final String rawData;
@@ -136,14 +137,9 @@ public class RedisModuleImpl implements RedisModule {
                 }
                 rawData = jedis.get(key);
             }
-            final ByteArrayInputStream bais = new ByteArrayInputStream(Base64Coder.decode(rawData));
-            final ObjectInputStream ois = new ObjectInputStream(bais);
-            object = (T) ois.readObject();
-            bais.close();
-            ois.close();
-        } catch (IOException | ClassNotFoundException ex) {
-            Logger.error("Can't deserialize object", ex);
-        } catch (NullPointerException ignore) {
+            object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
+        } catch (IOException | NullPointerException ignore) {
+            ignore.printStackTrace();
         }
         return object;
     }
@@ -156,34 +152,29 @@ public class RedisModuleImpl implements RedisModule {
     @Override
     public void set(final String key, final Object value, final int expiration) {
         try {
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            final ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(value);
-            oos.flush();
+            final String data = Json.mapper().writerFor(value.getClass()).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
-                jedis.set(key, new String(Base64Coder.encode(baos.toByteArray())));
+                jedis.set(key, data);
                 if (expiration > 0) {
                     jedis.expire(key, expiration);
                 }
             }
-            baos.close();
-            oos.close();
         } catch (IOException ex) {
             Logger.error("Can't serialize object", ex);
         }
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Callable<T> block) {
-        return this.getOrElse(key, block, 0);
+    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block) {
+        return this.getOrElse(key, clazz, block, 0);
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Callable<T> block, final int expiration) {
-        T data = this.get(key);
+    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration) {
+        T data = this.get(key, clazz);
         if (data == null) {
             try {
                 data = block.call();
