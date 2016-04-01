@@ -41,7 +41,19 @@ public interface RedisModule {
      * @param value The value to set
      * @since 16.03.09
      */
+    @Deprecated
     void set(final String key, final Object value);
+
+    /**
+     * Sets a value without expiration.
+     *
+     * @param key   Item key
+     * @param clazz Object type
+     * @param value The value to set
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.03.31
+     */
+    <T> void set(final String key, final Class<T> clazz, final Object value);
 
     /**
      * Sets a value with expiration.
@@ -51,7 +63,20 @@ public interface RedisModule {
      * @param expiration expiration in seconds
      * @since 16.03.09
      */
+    @Deprecated
     void set(final String key, final Object value, final int expiration);
+
+    /**
+     * Sets a value with expiration.
+     *
+     * @param key        Item key
+     * @param clazz      Object type
+     * @param value      The value to set
+     * @param expiration expiration in seconds
+     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.03.31
+     */
+    <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration);
 
     /**
      * Retrieve a value from the cache, or set it from a default

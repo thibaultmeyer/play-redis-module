@@ -146,13 +146,23 @@ public class RedisModuleImpl implements RedisModule {
 
     @Override
     public void set(final String key, final Object value) {
-        this.set(key, value, 0);
+        this.set(key, value.getClass(), value, 0);
+    }
+
+    @Override
+    public <T> void set(final String key, final Class<T> clazz, final Object value) {
+        this.set(key, clazz, value, 0);
     }
 
     @Override
     public void set(final String key, final Object value, final int expiration) {
+        this.set(key, value.getClass(), value, 0);
+    }
+
+    @Override
+    public <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration) {
         try {
-            final String data = Json.mapper().writerFor(value.getClass()).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
