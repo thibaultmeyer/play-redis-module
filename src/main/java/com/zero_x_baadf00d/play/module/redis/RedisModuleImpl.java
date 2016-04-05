@@ -18,7 +18,7 @@ import java.util.concurrent.Callable;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.03.31
+ * @version 16.04.05
  * @see RedisModule
  * @since 16.03.09
  */
@@ -137,9 +137,10 @@ public class RedisModuleImpl implements RedisModule {
                 }
                 rawData = jedis.get(key);
             }
-            object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
+            if (rawData != null) {
+                object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
+            }
         } catch (IOException | NullPointerException ignore) {
-            ignore.printStackTrace();
         }
         return object;
     }
