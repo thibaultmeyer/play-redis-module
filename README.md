@@ -52,7 +52,7 @@ Redis module for Play Framework 2
         }
 
         public Result index() {
-            final String token = this.redisModule.getOrElse("key", () -> {
+            final String token = this.redisModule.getOrElse("key", String.class, () -> {
                 return "new-token";
             }, 60);
             return ok(token);
@@ -62,6 +62,29 @@ Redis module for Play Framework 2
 
 
 #### Example 2
+
+```java
+    public class MyController extends Controller {
+
+        @Inject
+        private final RedisModule redisModule;
+
+        public Result index() {
+            final Type typeOfListOfString = new TypeToken<List<String>>() {
+            }.getType();
+            final List<String> tokens = this.redisModule.getOrElse("key", typeOfListOfString.getClass(), () -> {
+                final List<String> tokens = new ArrayList<>();
+                tokens.add("token 1");
+                tokens.add("token 2");
+                return tokens;
+            }, 60);
+            return ok(token);
+        }
+    }
+```
+
+
+#### Example 3
 
 ```java
     final RedisModule redisModule = Play.application().injector().instanceOf(RedisModule.class);
