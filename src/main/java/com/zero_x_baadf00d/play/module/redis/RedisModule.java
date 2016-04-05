@@ -2,6 +2,7 @@ package com.zero_x_baadf00d.play.module.redis;
 
 import redis.clients.jedis.Jedis;
 
+import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 
 /**
@@ -35,6 +36,17 @@ public interface RedisModule {
     <T> T get(final String key, final Class<T> clazz);
 
     /**
+     * Retrieves an object by key.
+     *
+     * @param key  Item key
+     * @param type The object type
+     * @param <T>  Generic type of something implementing {@code java.io.Serializable}
+     * @return object or {@code null}
+     * @since 16.04.05
+     */
+    <T> T get(final String key, final Type type);
+
+    /**
      * Sets a value without expiration.
      *
      * @param key   Item key
@@ -54,6 +66,16 @@ public interface RedisModule {
      * @since 16.03.31
      */
     <T> void set(final String key, final Class<T> clazz, final Object value);
+
+    /**
+     * Sets a value without expiration.
+     *
+     * @param key   Item key
+     * @param type  Object type
+     * @param value The value to set
+     * @since 16.04.05
+     */
+    void set(final String key, final Type type, final Object value);
 
     /**
      * Sets a value with expiration.
@@ -79,6 +101,17 @@ public interface RedisModule {
     <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration);
 
     /**
+     * Sets a value with expiration.
+     *
+     * @param key        Item key
+     * @param type       Object type
+     * @param value      The value to set
+     * @param expiration expiration in seconds
+     * @since 16.04.05
+     */
+    void set(final String key, final Type type, final Object value, final int expiration);
+
+    /**
      * Retrieve a value from the cache, or set it from a default
      * Callable function. The value has no expiration.
      *
@@ -93,6 +126,19 @@ public interface RedisModule {
 
     /**
      * Retrieve a value from the cache, or set it from a default
+     * Callable function. The value has no expiration.
+     *
+     * @param key   Item key
+     * @param type  Object type
+     * @param block block returning value to set if key does not exist
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @return value
+     * @since 16.04.05
+     */
+    <T> T getOrElse(final String key, final Type type, final Callable<T> block);
+
+    /**
+     * Retrieve a value from the cache, or set it from a default
      * Callable function.
      *
      * @param key        Item key
@@ -104,6 +150,20 @@ public interface RedisModule {
      * @since 16.03.31
      */
     <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration);
+
+    /**
+     * Retrieve a value from the cache, or set it from a default
+     * Callable function.
+     *
+     * @param key        Item key
+     * @param type       Object type
+     * @param block      block returning value to set if key does not exist
+     * @param expiration expiration period in seconds
+     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
+     * @return value
+     * @since 16.04.05
+     */
+    <T> T getOrElse(final String key, final Type type, final Callable<T> block, final int expiration);
 
     /**
      * Removes a value from the cache.

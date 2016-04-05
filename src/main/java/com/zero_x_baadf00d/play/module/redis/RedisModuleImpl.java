@@ -12,6 +12,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 
 /**
@@ -126,7 +127,6 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T get(final String key, final Class<T> clazz) {
         T object = null;
         try {
@@ -146,6 +146,11 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
+    public <T> T get(final String key, final Type type) {
+        return (T) this.get(key, type.getClass());
+    }
+
+    @Override
     public void set(final String key, final Object value) {
         this.set(key, value.getClass(), value, 0);
     }
@@ -153,6 +158,11 @@ public class RedisModuleImpl implements RedisModule {
     @Override
     public <T> void set(final String key, final Class<T> clazz, final Object value) {
         this.set(key, clazz, value, 0);
+    }
+
+    @Override
+    public void set(final String key, final Type type, final Object value) {
+        this.set(key, type.getClass(), value, 0);
     }
 
     @Override
@@ -179,13 +189,37 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
+    public void set(final String key, final Type type, final Object value, final int expiration) {
+        this.set(key, type.getClass(), value, 0);
+    }
+
+    @Override
     public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block) {
         return this.getOrElse(key, clazz, block, 0);
     }
 
     @Override
+    public <T> T getOrElse(final String key, final Type type, final Callable<T> block) {
+        return this.getOrElse(key, type.getClass(), block, 0);
+    }
+
+    @Override
     public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration) {
         T data = this.get(key, clazz);
+        if (data == null) {
+            try {
+                data = block.call();
+                this.set(key, data, expiration);
+            } catch (Exception ex) {
+                Logger.error("Something goes wrong Callable execution", ex);
+            }
+        }
+        return data;
+    }
+
+    @Override
+    public <T> T getOrElse(final String key, final Type type, final Callable<T> block, final int expiration) {
+        T data = this.get(key, type);
         if (data == null) {
             try {
                 data = block.call();
