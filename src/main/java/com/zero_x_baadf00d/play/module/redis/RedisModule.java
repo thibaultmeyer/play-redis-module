@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.03.31
+ * @version 16.04.05
  * @since 16.03.09
  */
 public interface RedisModule {
