@@ -1,7 +1,7 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-16.03-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-16.04-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/0xbaadf00d/play-redis-module.svg)](https://jitpack.io/#0xbaadf00d/play-redis-module)
 [![Build](https://img.shields.io/travis-ci/0xbaadf00d/play-redis-module.svg?branch=master&style=flat)](https://travis-ci.org/0xbaadf00d/play-redis-module)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/0xbaadf00d/play-redis-module/master/LICENSE)
@@ -52,7 +52,7 @@ Redis module for Play Framework 2
         }
 
         public Result index() {
-            final String token = this.redisModule.getOrElse("key", () -> {
+            final String token = this.redisModule.getOrElse("key", String.class, () -> {
                 return "new-token";
             }, 60);
             return ok(token);
@@ -62,6 +62,29 @@ Redis module for Play Framework 2
 
 
 #### Example 2
+
+```java
+    public class MyController extends Controller {
+
+        @Inject
+        private final RedisModule redisModule;
+
+        public Result index() {
+            final Type typeOfListOfString = new TypeToken<List<String>>() {
+            }.getType();
+            final List<String> tokens = this.redisModule.getOrElse("key", typeOfListOfString.getClass(), () -> {
+                final List<String> tokens = new ArrayList<>();
+                tokens.add("token 1");
+                tokens.add("token 2");
+                return tokens;
+            }, 60);
+            return ok(token);
+        }
+    }
+```
+
+
+#### Example 3
 
 ```java
     final RedisModule redisModule = Play.application().injector().instanceOf(RedisModule.class);
