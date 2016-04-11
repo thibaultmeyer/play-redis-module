@@ -10,7 +10,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.04.05
+ * @version 16.04.11
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -180,4 +180,13 @@ public interface RedisModule {
      * @since 16.03.09
      */
     void remove(final String... keys);
+
+    /**
+     * Check if key is present on Redis database.
+     *
+     * @param key The key to test
+     * @return {@code true} if the key is present on Redis database
+     * @since 16.04.11
+     */
+    boolean exists(final String key);
 }

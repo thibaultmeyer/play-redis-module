@@ -19,7 +19,7 @@ import java.util.concurrent.Callable;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.04.05
+ * @version 16.04.11
  * @see RedisModule
  * @since 16.03.09
  */
@@ -251,5 +251,17 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.del(k);
             }
         }
+    }
+
+    @Override
+    public boolean exists(final String key) {
+        boolean exists;
+        try (final Jedis jedis = this.redisPool.getResource()) {
+            if (this.redisDefaultDb != null) {
+                jedis.select(this.redisDefaultDb);
+            }
+            exists = jedis.exists(key);
+        }
+        return exists;
     }
 }
