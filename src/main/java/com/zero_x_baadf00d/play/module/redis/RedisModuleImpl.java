@@ -1,9 +1,31 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 Thibault Meyer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.zero_x_baadf00d.play.module.redis;
 
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
-import play.libs.F;
 import play.libs.Json;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -13,13 +35,16 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.04.05
+ * @version 16.05.05
  * @see RedisModule
  * @since 16.03.09
  */
@@ -112,7 +137,7 @@ public class RedisModuleImpl implements RedisModule {
         }
         lifecycle.addStopHook(() -> {
             this.redisPool.close();
-            return F.Promise.pure(null);
+            return CompletableFuture.completedFuture(null);
         });
     }
 
@@ -251,5 +276,68 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.del(k);
             }
         }
+    }
+
+    @Override
+    public boolean exists(final String key) {
+        boolean exists;
+        try (final Jedis jedis = this.redisPool.getResource()) {
+            if (this.redisDefaultDb != null) {
+                jedis.select(this.redisDefaultDb);
+            }
+            exists = jedis.exists(key);
+        }
+        return exists;
+    }
+
+    @Override
+    public <T> void addInList(final String key, final Class<T> clazz, final Object value) {
+        try {
+            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                jedis.lpush(key, data);
+            }
+        } catch (IOException ignore) {
+        }
+    }
+
+    @Override
+    public <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem) {
+        try {
+            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                jedis.lpush(key, data);
+                jedis.ltrim(key, 0, maxItem);
+            }
+        } catch (IOException ignore) {
+        }
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final Class<T> clazz) {
+        List<T> objects = null;
+        try {
+            final List<String> rawData;
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                rawData = jedis.lrange(key, 0, -1);
+            }
+            if (rawData != null) {
+                objects = new ArrayList<>();
+                for (final String s : rawData) {
+                    objects.add(Json.mapper().readerFor(clazz).readValue(s.getBytes()));
+                }
+            }
+        } catch (IOException | NullPointerException ignore) {
+        }
+        return objects;
     }
 }
