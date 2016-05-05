@@ -26,6 +26,7 @@ package com.zero_x_baadf00d.play.module.redis;
 import redis.clients.jedis.Jedis;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -33,7 +34,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.04.11
+ * @version 16.05.05
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -212,4 +213,38 @@ public interface RedisModule {
      * @since 16.04.11
      */
     boolean exists(final String key);
+
+    /**
+     * Add a value in a list.
+     *
+     * @param key   The list key
+     * @param clazz Object type
+     * @param value The value to add in the list
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.05.05
+     */
+    <T> void addInList(final String key, final Class<T> clazz, final Object value);
+
+    /**
+     * Add a value in a list.
+     *
+     * @param key     The list key
+     * @param clazz   Object type
+     * @param value   The value to add in list
+     * @param maxItem The maximum number of items to keep in the list
+     * @param <T>     Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.05.05
+     */
+    <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem);
+
+    /**
+     * Get values from a list.
+     *
+     * @param key   The list key
+     * @param clazz Object type
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 16.05.05
+     */
+    <T> List<T> getFromList(final String key, final Class<T> clazz);
 }

@@ -26,7 +26,6 @@ package com.zero_x_baadf00d.play.module.redis;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
-import play.libs.F;
 import play.libs.Json;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -36,13 +35,16 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.04.11
+ * @version 16.05.05
  * @see RedisModule
  * @since 16.03.09
  */
@@ -135,7 +137,7 @@ public class RedisModuleImpl implements RedisModule {
         }
         lifecycle.addStopHook(() -> {
             this.redisPool.close();
-            return F.Promise.pure(null);
+            return CompletableFuture.completedFuture(null);
         });
     }
 
@@ -286,5 +288,56 @@ public class RedisModuleImpl implements RedisModule {
             exists = jedis.exists(key);
         }
         return exists;
+    }
+
+    @Override
+    public <T> void addInList(final String key, final Class<T> clazz, final Object value) {
+        try {
+            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                jedis.lpush(key, data);
+            }
+        } catch (IOException ignore) {
+        }
+    }
+
+    @Override
+    public <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem) {
+        try {
+            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                jedis.lpush(key, data);
+                jedis.ltrim(key, 0, maxItem);
+            }
+        } catch (IOException ignore) {
+        }
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final Class<T> clazz) {
+        List<T> objects = null;
+        try {
+            final List<String> rawData;
+            try (final Jedis jedis = this.redisPool.getResource()) {
+                if (this.redisDefaultDb != null) {
+                    jedis.select(this.redisDefaultDb);
+                }
+                rawData = jedis.lrange(key, 0, -1);
+            }
+            if (rawData != null) {
+                objects = new ArrayList<>();
+                for (final String s : rawData) {
+                    objects.add(Json.mapper().readerFor(clazz).readValue(s.getBytes()));
+                }
+            }
+        } catch (IOException | NullPointerException ignore) {
+        }
+        return objects;
     }
 }
