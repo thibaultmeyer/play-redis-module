@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.05.05
+ * @version 16.05.07
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -42,17 +42,29 @@ public interface RedisModule {
     /**
      * Get a Redis connection from the pool.
      *
-     * @return A redis connection
+     * @return A Redis connection
      * @see Jedis
      * @since 16.03.09
      */
     Jedis getConnection();
 
     /**
+     * Get a Redis connection from the pool pre-configured
+     * with the right database. If the database number is
+     * under zero, the database "zero" will be selected.
+     *
+     * @param db The database number to use
+     * @return A Redis connection
+     * @see Jedis
+     * @since 16.05.07
+     */
+    Jedis getConnection(final int db);
+
+    /**
      * Retrieves an object by key.
      *
      * @param key   Item key
-     * @param clazz The object type
+     * @param clazz The object class
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @return object or {@code null}
      * @since 16.03.09
@@ -84,7 +96,7 @@ public interface RedisModule {
      * Sets a value without expiration.
      *
      * @param key   Item key
-     * @param clazz Object type
+     * @param clazz The object class
      * @param value The value to set
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @since 16.03.31
@@ -95,7 +107,7 @@ public interface RedisModule {
      * Sets a value without expiration.
      *
      * @param key   Item key
-     * @param type  Object type
+     * @param type  The object type
      * @param value The value to set
      * @since 16.04.05
      */
@@ -116,7 +128,7 @@ public interface RedisModule {
      * Sets a value with expiration.
      *
      * @param key        Item key
-     * @param clazz      Object type
+     * @param clazz      The object class
      * @param value      The value to set
      * @param expiration expiration in seconds
      * @param <T>        Generic type of something implementing {@code java.io.Serializable}
@@ -128,7 +140,7 @@ public interface RedisModule {
      * Sets a value with expiration.
      *
      * @param key        Item key
-     * @param type       Object type
+     * @param type       The object type
      * @param value      The value to set
      * @param expiration expiration in seconds
      * @since 16.04.05
@@ -140,7 +152,7 @@ public interface RedisModule {
      * Callable function. The value has no expiration.
      *
      * @param key   Item key
-     * @param clazz Object type
+     * @param clazz The object class
      * @param block block returning value to set if key does not exist
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @return value
@@ -153,7 +165,7 @@ public interface RedisModule {
      * Callable function. The value has no expiration.
      *
      * @param key   Item key
-     * @param type  Object type
+     * @param type  The object type
      * @param block block returning value to set if key does not exist
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @return value
@@ -166,7 +178,7 @@ public interface RedisModule {
      * Callable function.
      *
      * @param key        Item key
-     * @param clazz      Object type
+     * @param clazz      The object class
      * @param block      block returning value to set if key does not exist
      * @param expiration expiration period in seconds
      * @param <T>        Generic type of something implementing {@code java.io.Serializable}
@@ -180,7 +192,7 @@ public interface RedisModule {
      * Callable function.
      *
      * @param key        Item key
-     * @param type       Object type
+     * @param type       The object type
      * @param block      block returning value to set if key does not exist
      * @param expiration expiration period in seconds
      * @param <T>        Generic type of something implementing {@code java.io.Serializable}
@@ -218,7 +230,7 @@ public interface RedisModule {
      * Add a value in a list.
      *
      * @param key   The list key
-     * @param clazz Object type
+     * @param clazz The object class
      * @param value The value to add in the list
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @since 16.05.05
@@ -229,7 +241,7 @@ public interface RedisModule {
      * Add a value in a list.
      *
      * @param key     The list key
-     * @param clazz   Object type
+     * @param clazz   The object class
      * @param value   The value to add in list
      * @param maxItem The maximum number of items to keep in the list
      * @param <T>     Generic type of something implementing {@code java.io.Serializable}
@@ -241,10 +253,68 @@ public interface RedisModule {
      * Get values from a list.
      *
      * @param key   The list key
-     * @param clazz Object type
+     * @param clazz The object class
      * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @return The values list
      * @since 16.05.05
      */
     <T> List<T> getFromList(final String key, final Class<T> clazz);
+
+    /**
+     * Get values from a list.
+     *
+     * @param key    The list key
+     * @param clazz  The object class
+     * @param offset From where
+     * @param count  The number of items to retrieve
+     * @param <T>    Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 16.05.07
+     */
+    <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count);
+
+    /**
+     * Add a value in a list.
+     *
+     * @param key   The list key
+     * @param type  The object type
+     * @param value The value to add in the list
+     * @since 16.05.07
+     */
+    void addInList(final String key, final Type type, final Object value);
+
+    /**
+     * Add a value in a list.
+     *
+     * @param key     The list key
+     * @param type    The object type
+     * @param value   The value to add in list
+     * @param maxItem The maximum number of items to keep in the list
+     * @since 16.05.07
+     */
+    void addInList(final String key, final Type type, final Object value, final int maxItem);
+
+    /**
+     * Get values from a list.
+     *
+     * @param key  The list key
+     * @param type The object type
+     * @param <T>  Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 16.05.07
+     */
+    <T> List<T> getFromList(final String key, final Type type);
+
+    /**
+     * Get values from a list.
+     *
+     * @param key    The list key
+     * @param type   The object type
+     * @param offset From where
+     * @param count  The number of items to retrieve
+     * @param <T>    Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 16.05.07
+     */
+    <T> List<T> getFromList(final String key, final Type type, final int offset, final int count);
 }

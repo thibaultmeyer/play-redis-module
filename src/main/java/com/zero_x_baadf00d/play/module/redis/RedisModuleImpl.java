@@ -44,12 +44,19 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.05.05
+ * @version 16.05.07
  * @see RedisModule
  * @since 16.03.09
  */
 @Singleton
 public class RedisModuleImpl implements RedisModule {
+
+    /**
+     * Logger instance.
+     *
+     * @since 16.05.07
+     */
+    private static final Logger.ALogger LOG = Logger.of(RedisModule.class);
 
     /**
      * @since 16.03.09
@@ -132,8 +139,9 @@ public class RedisModuleImpl implements RedisModule {
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
             }
+            RedisModuleImpl.LOG.info("Redis module is ready!");
         } else {
-            throw new RuntimeException("RedisModule is not properly configured");
+            throw new RuntimeException("Redis module is not properly configured");
         }
         lifecycle.addStopHook(() -> {
             this.redisPool.close();
@@ -152,6 +160,16 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
+    public Jedis getConnection(final int db) {
+        if (this.redisDefaultDb == null) {
+            return this.redisPool.getResource();
+        }
+        final Jedis conn = this.redisPool.getResource();
+        conn.select(db >= 0 ? db : 0);
+        return conn;
+    }
+
+    @Override
     public <T> T get(final String key, final Class<T> clazz) {
         T object = null;
         try {
@@ -165,7 +183,8 @@ public class RedisModuleImpl implements RedisModule {
             if (rawData != null) {
                 object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
             }
-        } catch (IOException | NullPointerException ignore) {
+        } catch (IOException | NullPointerException ex) {
+            RedisModuleImpl.LOG.error("Can't get object", ex);
         }
         return object;
     }
@@ -209,7 +228,7 @@ public class RedisModuleImpl implements RedisModule {
                 }
             }
         } catch (IOException ex) {
-            Logger.error("Can't serialize object", ex);
+            RedisModuleImpl.LOG.error("Can't set object", ex);
         }
     }
 
@@ -236,7 +255,7 @@ public class RedisModuleImpl implements RedisModule {
                 data = block.call();
                 this.set(key, data, expiration);
             } catch (Exception ex) {
-                Logger.error("Something goes wrong Callable execution", ex);
+                RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
         }
         return data;
@@ -250,7 +269,7 @@ public class RedisModuleImpl implements RedisModule {
                 data = block.call();
                 this.set(key, data, expiration);
             } catch (Exception ex) {
-                Logger.error("Something goes wrong Callable execution", ex);
+                RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
         }
         return data;
@@ -300,7 +319,8 @@ public class RedisModuleImpl implements RedisModule {
                 }
                 jedis.lpush(key, data);
             }
-        } catch (IOException ignore) {
+        } catch (IOException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
@@ -315,12 +335,18 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.lpush(key, data);
                 jedis.ltrim(key, 0, maxItem);
             }
-        } catch (IOException ignore) {
+        } catch (IOException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
     @Override
     public <T> List<T> getFromList(final String key, final Class<T> clazz) {
+        return this.getFromList(key, clazz, 0, -1);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count) {
         List<T> objects = null;
         try {
             final List<String> rawData;
@@ -328,7 +354,7 @@ public class RedisModuleImpl implements RedisModule {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
-                rawData = jedis.lrange(key, 0, -1);
+                rawData = jedis.lrange(key, offset, count);
             }
             if (rawData != null) {
                 objects = new ArrayList<>();
@@ -336,8 +362,31 @@ public class RedisModuleImpl implements RedisModule {
                     objects.add(Json.mapper().readerFor(clazz).readValue(s.getBytes()));
                 }
             }
-        } catch (IOException | NullPointerException ignore) {
+        } catch (IOException | NullPointerException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
         return objects;
+    }
+
+    @Override
+    public void addInList(final String key, final Type type, final Object value) {
+        this.addInList(key, type.getClass(), value);
+    }
+
+    @Override
+    public void addInList(final String key, final Type type, final Object value, final int maxItem) {
+        this.addInList(key, type.getClass(), value, maxItem);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> List<T> getFromList(final String key, final Type type) {
+        return (List<T>) this.getFromList(key, type.getClass(), 0, -1);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> List<T> getFromList(final String key, final Type type, final int offset, final int count) {
+        return (List<T>) this.getFromList(key, type.getClass(), offset, count);
     }
 }
