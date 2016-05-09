@@ -52,7 +52,7 @@ Redis module for Play Framework 2
         }
 
         public Result index() {
-            final String token = this.redisModule.getOrElse("key", String.class, () -> {
+            final String token = this.redisModule.getOrElse("key", new TypeReference<String>() {}, () -> {
                 return "new-token";
             }, 60);
             return ok(token);
@@ -70,9 +70,7 @@ Redis module for Play Framework 2
         private final RedisModule redisModule;
 
         public Result index() {
-            final Type typeOfListOfString = new TypeToken<List<String>>() {
-            }.getType();
-            final List<String> tokens = this.redisModule.getOrElse("key", typeOfListOfString.getClass(), () -> {
+            final List<String> tokens = this.redisModule.getOrElse("key", new TypeReference<List<String>>() {}, () -> {
                 final List<String> tokens = new ArrayList<>();
                 tokens.add("token 1");
                 tokens.add("token 2");
