@@ -23,6 +23,7 @@
  */
 package com.zero_x_baadf00d.play.module.redis;
 
+import com.fasterxml.jackson.databind.ObjectReader;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
@@ -44,7 +45,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.05.07
+ * @version 16.05.09
  * @see RedisModule
  * @since 16.03.09
  */
@@ -347,7 +348,7 @@ public class RedisModuleImpl implements RedisModule {
 
     @Override
     public <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count) {
-        List<T> objects = null;
+        final List<T> objects = new ArrayList<>();
         try {
             final List<String> rawData;
             try (final Jedis jedis = this.redisPool.getResource()) {
@@ -357,9 +358,9 @@ public class RedisModuleImpl implements RedisModule {
                 rawData = jedis.lrange(key, offset, count);
             }
             if (rawData != null) {
-                objects = new ArrayList<>();
+                final ObjectReader objectReader = Json.mapper().readerFor(clazz);
                 for (final String s : rawData) {
-                    objects.add(Json.mapper().readerFor(clazz).readValue(s.getBytes()));
+                    objects.add(objectReader.readValue(s));
                 }
             }
         } catch (IOException | NullPointerException ex) {
