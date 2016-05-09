@@ -23,6 +23,7 @@
  */
 package com.zero_x_baadf00d.play.module.redis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
 import play.Configuration;
 import play.Logger;
@@ -35,7 +36,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -171,7 +171,7 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> T get(final String key, final Class<T> clazz) {
+    public <T> T get(final String key, final TypeReference<T> typeReference) {
         T object = null;
         try {
             final String rawData;
@@ -182,43 +182,23 @@ public class RedisModuleImpl implements RedisModule {
                 rawData = jedis.get(key);
             }
             if (rawData != null) {
-                object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
+                object = Json.mapper().readerFor(typeReference).readValue(rawData.getBytes());
             }
-        } catch (IOException | NullPointerException ex) {
+        } catch (IOException ex) {
             RedisModuleImpl.LOG.error("Can't get object", ex);
         }
         return object;
     }
 
     @Override
-    public <T> T get(final String key, final Type type) {
-        return (T) this.get(key, type.getClass());
+    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value) {
+        this.set(key, typeReference, value, 0);
     }
 
     @Override
-    public void set(final String key, final Object value) {
-        this.set(key, value.getClass(), value, 0);
-    }
-
-    @Override
-    public <T> void set(final String key, final Class<T> clazz, final Object value) {
-        this.set(key, clazz, value, 0);
-    }
-
-    @Override
-    public void set(final String key, final Type type, final Object value) {
-        this.set(key, type.getClass(), value, 0);
-    }
-
-    @Override
-    public void set(final String key, final Object value, final int expiration) {
-        this.set(key, value.getClass(), value, 0);
-    }
-
-    @Override
-    public <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration) {
+    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -234,41 +214,17 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public void set(final String key, final Type type, final Object value, final int expiration) {
-        this.set(key, type.getClass(), value, 0);
+    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block) {
+        return this.getOrElse(key, typeReference, block, 0);
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block) {
-        return this.getOrElse(key, clazz, block, 0);
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Type type, final Callable<T> block) {
-        return this.getOrElse(key, type.getClass(), block, 0);
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration) {
-        T data = this.get(key, clazz);
+    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block, final int expiration) {
+        T data = this.get(key, typeReference);
         if (data == null) {
             try {
                 data = block.call();
-                this.set(key, data, expiration);
-            } catch (Exception ex) {
-                RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
-            }
-        }
-        return data;
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Type type, final Callable<T> block, final int expiration) {
-        T data = this.get(key, type);
-        if (data == null) {
-            try {
-                data = block.call();
-                this.set(key, data, expiration);
+                this.set(key, typeReference, data, expiration);
             } catch (Exception ex) {
                 RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
@@ -311,9 +267,9 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> void addInList(final String key, final Class<T> clazz, final Object value) {
+    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -326,9 +282,9 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem) {
+    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value, final int maxItem) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -342,12 +298,12 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final Class<T> clazz) {
-        return this.getFromList(key, clazz, 0, -1);
+    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference) {
+        return this.getFromList(key, typeReference, 0, -1);
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count) {
+    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset, final int count) {
         final List<T> objects = new ArrayList<>();
         try {
             final List<String> rawData;
@@ -358,7 +314,7 @@ public class RedisModuleImpl implements RedisModule {
                 rawData = jedis.lrange(key, offset, count);
             }
             if (rawData != null) {
-                final ObjectReader objectReader = Json.mapper().readerFor(clazz);
+                final ObjectReader objectReader = Json.mapper().readerFor(typeReference);
                 for (final String s : rawData) {
                     objects.add(objectReader.readValue(s));
                 }
@@ -367,27 +323,5 @@ public class RedisModuleImpl implements RedisModule {
             RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
         return objects;
-    }
-
-    @Override
-    public void addInList(final String key, final Type type, final Object value) {
-        this.addInList(key, type.getClass(), value);
-    }
-
-    @Override
-    public void addInList(final String key, final Type type, final Object value, final int maxItem) {
-        this.addInList(key, type.getClass(), value, maxItem);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> List<T> getFromList(final String key, final Type type) {
-        return (List<T>) this.getFromList(key, type.getClass(), 0, -1);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> List<T> getFromList(final String key, final Type type, final int offset, final int count) {
-        return (List<T>) this.getFromList(key, type.getClass(), offset, count);
     }
 }
