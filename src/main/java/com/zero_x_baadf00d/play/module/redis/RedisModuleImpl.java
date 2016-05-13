@@ -290,7 +290,7 @@ public class RedisModuleImpl implements RedisModule {
                     jedis.select(this.redisDefaultDb);
                 }
                 jedis.lpush(key, data);
-                jedis.ltrim(key, 0, maxItem - 1);
+                jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
         } catch (IOException ex) {
             RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
@@ -311,7 +311,7 @@ public class RedisModuleImpl implements RedisModule {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
-                rawData = jedis.lrange(key, offset, count - 1);
+                rawData = jedis.lrange(key, offset, count > 0 ? count - 1 : count);
             }
             if (rawData != null) {
                 final ObjectReader objectReader = Json.mapper().readerFor(typeReference);
