@@ -45,7 +45,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.05.09
+ * @version 16.05.19
  * @see RedisModule
  * @since 16.03.09
  */
@@ -140,11 +140,12 @@ public class RedisModuleImpl implements RedisModule {
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
             }
-            RedisModuleImpl.LOG.info("Redis module is ready!");
+            RedisModuleImpl.LOG.info("Redis connected at {}", String.format("redis://%s:%d", redisHost, redisPort));
         } else {
             throw new RuntimeException("Redis module is not properly configured");
         }
         lifecycle.addStopHook(() -> {
+            RedisModuleImpl.LOG.info("Shutting down Redis");
             this.redisPool.close();
             return CompletableFuture.completedFuture(null);
         });
