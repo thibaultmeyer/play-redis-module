@@ -196,9 +196,10 @@ public interface RedisModule {
     /**
      * Try to acquire a lock.
      *
-     * @param key The lock key
+     * @param key        The lock key
+     * @param expiration The lock TTL
      * @return {@code true} in case of success, otherwise, {@code false}
      * @since 16.08.09
      */
-    boolean tryLock(final String key);
+    boolean tryLock(final String key, final int expiration);
 }

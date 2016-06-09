@@ -327,12 +327,17 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public boolean tryLock(final String key) {
+    public boolean tryLock(final String key, final int expiration) {
+        final long ret;
         try (final Jedis jedis = this.redisPool.getResource()) {
             if (this.redisDefaultDb != null) {
                 jedis.select(this.redisDefaultDb);
             }
-            return jedis.setnx(key, "1") == 1;
+            ret = jedis.setnx(key, "1");
+            if (ret == 1) {
+                jedis.expire(key, expiration);
+            }
         }
+        return ret == 1;
     }
 }
