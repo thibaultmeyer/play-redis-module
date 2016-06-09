@@ -45,7 +45,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.05.19
+ * @version 16.06.09
  * @see RedisModule
  * @since 16.03.09
  */
@@ -324,5 +324,15 @@ public class RedisModuleImpl implements RedisModule {
             RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
         return objects;
+    }
+
+    @Override
+    public boolean tryLock(final String key) {
+        try (final Jedis jedis = this.redisPool.getResource()) {
+            if (this.redisDefaultDb != null) {
+                jedis.select(this.redisDefaultDb);
+            }
+            return jedis.setnx(key, "1") == 1;
+        }
     }
 }
