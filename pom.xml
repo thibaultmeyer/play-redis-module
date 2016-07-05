@@ -6,7 +6,7 @@
 
     <groupId>com.zero_x_baadf00d</groupId>
     <artifactId>play-redis-module</artifactId>
-    <version>16.05</version>
+    <version>16.07</version>
     <name>Play Redis module</name>
     <description>Redis module for Play Framework 2</description>
     <url>https://github.com/0xbaadf00d/play-redis-module</url>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>com.typesafe.play</groupId>
             <artifactId>play_2.11</artifactId>
-            <version>2.5.1</version>
+            <version>2.5.3</version>
             <optional>true</optional>
         </dependency>
     </dependencies>

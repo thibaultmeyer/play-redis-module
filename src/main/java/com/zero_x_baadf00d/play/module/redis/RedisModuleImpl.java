@@ -23,6 +23,8 @@
  */
 package com.zero_x_baadf00d.play.module.redis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectReader;
 import play.Configuration;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
@@ -34,7 +36,6 @@ import redis.clients.jedis.JedisPoolConfig;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -44,12 +45,19 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.05.05
+ * @version 16.06.09
  * @see RedisModule
  * @since 16.03.09
  */
 @Singleton
 public class RedisModuleImpl implements RedisModule {
+
+    /**
+     * Logger instance.
+     *
+     * @since 16.05.07
+     */
+    private static final Logger.ALogger LOG = Logger.of(RedisModule.class);
 
     /**
      * @since 16.03.09
@@ -132,10 +140,12 @@ public class RedisModuleImpl implements RedisModule {
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
             }
+            RedisModuleImpl.LOG.info("Redis connected at {}", String.format("redis://%s:%d", redisHost, redisPort));
         } else {
-            throw new RuntimeException("RedisModule is not properly configured");
+            throw new RuntimeException("Redis module is not properly configured");
         }
         lifecycle.addStopHook(() -> {
+            RedisModuleImpl.LOG.info("Shutting down Redis");
             this.redisPool.close();
             return CompletableFuture.completedFuture(null);
         });
@@ -152,7 +162,17 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> T get(final String key, final Class<T> clazz) {
+    public Jedis getConnection(final int db) {
+        if (this.redisDefaultDb == null) {
+            return this.redisPool.getResource();
+        }
+        final Jedis conn = this.redisPool.getResource();
+        conn.select(db >= 0 ? db : 0);
+        return conn;
+    }
+
+    @Override
+    public <T> T get(final String key, final TypeReference<T> typeReference) {
         T object = null;
         try {
             final String rawData;
@@ -163,42 +183,23 @@ public class RedisModuleImpl implements RedisModule {
                 rawData = jedis.get(key);
             }
             if (rawData != null) {
-                object = Json.mapper().readerFor(clazz).readValue(rawData.getBytes());
+                object = Json.mapper().readerFor(typeReference).readValue(rawData.getBytes());
             }
-        } catch (IOException | NullPointerException ignore) {
+        } catch (IOException ex) {
+            RedisModuleImpl.LOG.error("Can't get object", ex);
         }
         return object;
     }
 
     @Override
-    public <T> T get(final String key, final Type type) {
-        return (T) this.get(key, type.getClass());
+    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value) {
+        this.set(key, typeReference, value, 0);
     }
 
     @Override
-    public void set(final String key, final Object value) {
-        this.set(key, value.getClass(), value, 0);
-    }
-
-    @Override
-    public <T> void set(final String key, final Class<T> clazz, final Object value) {
-        this.set(key, clazz, value, 0);
-    }
-
-    @Override
-    public void set(final String key, final Type type, final Object value) {
-        this.set(key, type.getClass(), value, 0);
-    }
-
-    @Override
-    public void set(final String key, final Object value, final int expiration) {
-        this.set(key, value.getClass(), value, 0);
-    }
-
-    @Override
-    public <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration) {
+    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -209,48 +210,24 @@ public class RedisModuleImpl implements RedisModule {
                 }
             }
         } catch (IOException ex) {
-            Logger.error("Can't serialize object", ex);
+            RedisModuleImpl.LOG.error("Can't set object", ex);
         }
     }
 
     @Override
-    public void set(final String key, final Type type, final Object value, final int expiration) {
-        this.set(key, type.getClass(), value, 0);
+    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block) {
+        return this.getOrElse(key, typeReference, block, 0);
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block) {
-        return this.getOrElse(key, clazz, block, 0);
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Type type, final Callable<T> block) {
-        return this.getOrElse(key, type.getClass(), block, 0);
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration) {
-        T data = this.get(key, clazz);
+    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block, final int expiration) {
+        T data = this.get(key, typeReference);
         if (data == null) {
             try {
                 data = block.call();
-                this.set(key, data, expiration);
+                this.set(key, typeReference, data, expiration);
             } catch (Exception ex) {
-                Logger.error("Something goes wrong Callable execution", ex);
-            }
-        }
-        return data;
-    }
-
-    @Override
-    public <T> T getOrElse(final String key, final Type type, final Callable<T> block, final int expiration) {
-        T data = this.get(key, type);
-        if (data == null) {
-            try {
-                data = block.call();
-                this.set(key, data, expiration);
-            } catch (Exception ex) {
-                Logger.error("Something goes wrong Callable execution", ex);
+                RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
         }
         return data;
@@ -291,53 +268,76 @@ public class RedisModuleImpl implements RedisModule {
     }
 
     @Override
-    public <T> void addInList(final String key, final Class<T> clazz, final Object value) {
+    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
                 jedis.lpush(key, data);
             }
-        } catch (IOException ignore) {
+        } catch (IOException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
     @Override
-    public <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem) {
+    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value, final int maxItem) {
         try {
-            final String data = Json.mapper().writerFor(clazz).writeValueAsString(value);
+            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
                 jedis.lpush(key, data);
-                jedis.ltrim(key, 0, maxItem);
+                jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
-        } catch (IOException ignore) {
+        } catch (IOException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final Class<T> clazz) {
-        List<T> objects = null;
+    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference) {
+        return this.getFromList(key, typeReference, 0, -1);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset, final int count) {
+        final List<T> objects = new ArrayList<>();
         try {
             final List<String> rawData;
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
-                rawData = jedis.lrange(key, 0, -1);
+                rawData = jedis.lrange(key, offset, count > 0 ? count - 1 : count);
             }
             if (rawData != null) {
-                objects = new ArrayList<>();
+                final ObjectReader objectReader = Json.mapper().readerFor(typeReference);
                 for (final String s : rawData) {
-                    objects.add(Json.mapper().readerFor(clazz).readValue(s.getBytes()));
+                    objects.add(objectReader.readValue(s));
                 }
             }
-        } catch (IOException | NullPointerException ignore) {
+        } catch (IOException | NullPointerException ex) {
+            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
         return objects;
+    }
+
+    @Override
+    public boolean tryLock(final String key, final int expiration) {
+        final long ret;
+        try (final Jedis jedis = this.redisPool.getResource()) {
+            if (this.redisDefaultDb != null) {
+                jedis.select(this.redisDefaultDb);
+            }
+            ret = jedis.setnx(key, "1");
+            if (ret == 1) {
+                jedis.expire(key, expiration);
+            }
+        }
+        return ret == 1;
     }
 }

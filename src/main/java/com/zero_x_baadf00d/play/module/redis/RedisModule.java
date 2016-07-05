@@ -23,9 +23,9 @@
  */
 package com.zero_x_baadf00d.play.module.redis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import redis.clients.jedis.Jedis;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.05.05
+ * @version 16.06.09
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -42,152 +42,84 @@ public interface RedisModule {
     /**
      * Get a Redis connection from the pool.
      *
-     * @return A redis connection
+     * @return A Redis connection
      * @see Jedis
      * @since 16.03.09
      */
     Jedis getConnection();
 
     /**
-     * Retrieves an object by key.
+     * Get a Redis connection from the pool pre-configured
+     * with the right database. If the database number is
+     * under zero, the database "zero" will be selected.
      *
-     * @param key   Item key
-     * @param clazz The object type
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
-     * @return object or {@code null}
-     * @since 16.03.09
+     * @param db The database number to use
+     * @return A Redis connection
+     * @see Jedis
+     * @since 16.05.07
      */
-    <T> T get(final String key, final Class<T> clazz);
+    Jedis getConnection(final int db);
 
     /**
      * Retrieves an object by key.
      *
-     * @param key  Item key
-     * @param type The object type
-     * @param <T>  Generic type of something implementing {@code java.io.Serializable}
+     * @param key           Item key
+     * @param typeReference The object type reference
+     * @param <T>           Generic type of something
      * @return object or {@code null}
-     * @since 16.04.05
-     */
-    <T> T get(final String key, final Type type);
-
-    /**
-     * Sets a value without expiration.
-     *
-     * @param key   Item key
-     * @param value The value to set
      * @since 16.03.09
      */
-    @Deprecated
-    void set(final String key, final Object value);
+    <T> T get(final String key, final TypeReference<T> typeReference);
 
     /**
      * Sets a value without expiration.
      *
-     * @param key   Item key
-     * @param clazz Object type
-     * @param value The value to set
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @param key           Item key
+     * @param typeReference The object type reference
+     * @param value         The value to set
+     * @param <T>           Generic type of something
      * @since 16.03.31
      */
-    <T> void set(final String key, final Class<T> clazz, final Object value);
-
-    /**
-     * Sets a value without expiration.
-     *
-     * @param key   Item key
-     * @param type  Object type
-     * @param value The value to set
-     * @since 16.04.05
-     */
-    void set(final String key, final Type type, final Object value);
+    <T> void set(final String key, final TypeReference<T> typeReference, final Object value);
 
     /**
      * Sets a value with expiration.
      *
-     * @param key        Item key
-     * @param value      The value to set
-     * @param expiration expiration in seconds
-     * @since 16.03.09
-     */
-    @Deprecated
-    void set(final String key, final Object value, final int expiration);
-
-    /**
-     * Sets a value with expiration.
-     *
-     * @param key        Item key
-     * @param clazz      Object type
-     * @param value      The value to set
-     * @param expiration expiration in seconds
-     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
+     * @param key           Item key
+     * @param typeReference The object type reference
+     * @param value         The value to set
+     * @param expiration    expiration in seconds
+     * @param <T>           Generic type of something
      * @since 16.03.31
      */
-    <T> void set(final String key, final Class<T> clazz, final Object value, final int expiration);
-
-    /**
-     * Sets a value with expiration.
-     *
-     * @param key        Item key
-     * @param type       Object type
-     * @param value      The value to set
-     * @param expiration expiration in seconds
-     * @since 16.04.05
-     */
-    void set(final String key, final Type type, final Object value, final int expiration);
+    <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration);
 
     /**
      * Retrieve a value from the cache, or set it from a default
      * Callable function. The value has no expiration.
      *
-     * @param key   Item key
-     * @param clazz Object type
-     * @param block block returning value to set if key does not exist
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @param key           Item key
+     * @param typeReference The object type reference
+     * @param block         block returning value to set if key does not exist
+     * @param <T>           Generic type of something
      * @return value
      * @since 16.03.31
      */
-    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block);
-
-    /**
-     * Retrieve a value from the cache, or set it from a default
-     * Callable function. The value has no expiration.
-     *
-     * @param key   Item key
-     * @param type  Object type
-     * @param block block returning value to set if key does not exist
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
-     * @return value
-     * @since 16.04.05
-     */
-    <T> T getOrElse(final String key, final Type type, final Callable<T> block);
+    <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block);
 
     /**
      * Retrieve a value from the cache, or set it from a default
      * Callable function.
      *
-     * @param key        Item key
-     * @param clazz      Object type
-     * @param block      block returning value to set if key does not exist
-     * @param expiration expiration period in seconds
-     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
+     * @param key           Item key
+     * @param typeReference The object type reference
+     * @param block         block returning value to set if key does not exist
+     * @param expiration    expiration period in seconds
+     * @param <T>           Generic type of something implementing {@code java.io.Serializable}
      * @return value
      * @since 16.03.31
      */
-    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration);
-
-    /**
-     * Retrieve a value from the cache, or set it from a default
-     * Callable function.
-     *
-     * @param key        Item key
-     * @param type       Object type
-     * @param block      block returning value to set if key does not exist
-     * @param expiration expiration period in seconds
-     * @param <T>        Generic type of something implementing {@code java.io.Serializable}
-     * @return value
-     * @since 16.04.05
-     */
-    <T> T getOrElse(final String key, final Type type, final Callable<T> block, final int expiration);
+    <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block, final int expiration);
 
     /**
      * Removes a value from the cache.
@@ -217,34 +149,57 @@ public interface RedisModule {
     /**
      * Add a value in a list.
      *
-     * @param key   The list key
-     * @param clazz Object type
-     * @param value The value to add in the list
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
-     * @since 16.05.05
+     * @param key           The list key
+     * @param typeReference The object type reference
+     * @param value         The value to add in the list
+     * @param <T>           Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.05.09
      */
-    <T> void addInList(final String key, final Class<T> clazz, final Object value);
+    <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value);
 
     /**
      * Add a value in a list.
      *
-     * @param key     The list key
-     * @param clazz   Object type
-     * @param value   The value to add in list
-     * @param maxItem The maximum number of items to keep in the list
-     * @param <T>     Generic type of something implementing {@code java.io.Serializable}
-     * @since 16.05.05
+     * @param key           The list key
+     * @param typeReference The object type reference
+     * @param value         The value to add in the list
+     * @param maxItem       The number of entries to keep in list
+     * @param <T>           Generic type of something implementing {@code java.io.Serializable}
+     * @since 16.05.09
      */
-    <T> void addInList(final String key, final Class<T> clazz, final Object value, final int maxItem);
+    <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value, final int maxItem);
 
     /**
      * Get values from a list.
      *
-     * @param key   The list key
-     * @param clazz Object type
-     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
+     * @param key           The list key
+     * @param typeReference The object type reference
+     * @param <T>           Generic type of something implementing {@code java.io.Serializable}
      * @return The values list
-     * @since 16.05.05
+     * @since 16.05.09
      */
-    <T> List<T> getFromList(final String key, final Class<T> clazz);
+    <T> List<T> getFromList(final String key, final TypeReference<T> typeReference);
+
+    /**
+     * Get values from a list.
+     *
+     * @param key           The list key
+     * @param typeReference The object type reference
+     * @param offset        From where
+     * @param count         The number of items to retrieve
+     * @param <T>           Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 16.05.09
+     */
+    <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset, final int count);
+
+    /**
+     * Try to acquire a lock.
+     *
+     * @param key        The lock key
+     * @param expiration The lock TTL
+     * @return {@code true} in case of success, otherwise, {@code false}
+     * @since 16.08.09
+     */
+    boolean tryLock(final String key, final int expiration);
 }
