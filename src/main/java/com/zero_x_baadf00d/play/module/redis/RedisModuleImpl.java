@@ -32,6 +32,8 @@ import play.libs.Json;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,7 +47,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.06.09
+ * @version 16.10.14
  * @see RedisModule
  * @since 16.03.09
  */
@@ -328,7 +330,7 @@ public class RedisModuleImpl implements RedisModule {
 
     @Override
     public boolean tryLock(final String key, final int expiration) {
-        final long ret;
+        long ret = 0;
         try (final Jedis jedis = this.redisPool.getResource()) {
             if (this.redisDefaultDb != null) {
                 jedis.select(this.redisDefaultDb);
@@ -337,6 +339,10 @@ public class RedisModuleImpl implements RedisModule {
             if (ret == 1) {
                 jedis.expire(key, expiration);
             }
+        } catch (JedisConnectionException ex) {
+            RedisModuleImpl.LOG.error("Can't connect to Redis: {}", ex.getCause().getMessage());
+        } catch (JedisDataException ex) {
+            RedisModuleImpl.LOG.error("Can't connect to Redis: {}", ex.getMessage());
         }
         return ret == 1;
     }

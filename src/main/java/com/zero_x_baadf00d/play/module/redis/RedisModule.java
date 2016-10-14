@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.06.09
+ * @version 16.10.14
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -194,7 +194,8 @@ public interface RedisModule {
     <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset, final int count);
 
     /**
-     * Try to acquire a lock.
+     * Try to acquire a lock. This method will return {@code false} if
+     * can't acquire lock or can't connect to Redis server.
      *
      * @param key        The lock key
      * @param expiration The lock TTL
