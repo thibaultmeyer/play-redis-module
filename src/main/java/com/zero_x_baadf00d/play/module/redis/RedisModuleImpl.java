@@ -47,7 +47,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.10.14
+ * @version 16.11.13
  * @see RedisModule
  * @since 16.03.09
  */
@@ -124,7 +124,7 @@ public class RedisModuleImpl implements RedisModule {
      */
     @Inject
     public RedisModuleImpl(final ApplicationLifecycle lifecycle, final Configuration configuration) {
-        final String redisHost = configuration.getString(RedisModuleImpl.REDISPOOL_SERVER_HOST);
+        final String redisHost = configuration.getString(RedisModuleImpl.REDISPOOL_SERVER_HOST, "127.0.0.1");
         final String redisPassword = configuration.getString(RedisModuleImpl.REDISPOOL_SERVER_PASSWORD);
         final Integer redisPort = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_PORT, 6379);
         final Integer redisConnTimeout = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_CONN_TIMEOUT, 0);
@@ -137,7 +137,7 @@ public class RedisModuleImpl implements RedisModule {
             poolConfig.setMinIdle(redisConnMinIdle > 0 ? redisConnMinIdle : 1);
             poolConfig.setMaxIdle(redisConnMaxIdle > 0 ? redisConnMaxIdle : 1);
             poolConfig.setMaxTotal(redisConnTotal > 0 ? redisConnTotal : 1);
-            if (redisPassword != null && redisPassword.length() > 0) {
+            if (redisPassword != null && !redisPassword.isEmpty()) {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout, redisPassword);
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
@@ -146,11 +146,13 @@ public class RedisModuleImpl implements RedisModule {
         } else {
             throw new RuntimeException("Redis module is not properly configured");
         }
-        lifecycle.addStopHook(() -> {
-            RedisModuleImpl.LOG.info("Shutting down Redis");
-            this.redisPool.close();
-            return CompletableFuture.completedFuture(null);
-        });
+        if (lifecycle != null) {
+            lifecycle.addStopHook(() -> {
+                RedisModuleImpl.LOG.info("Shutting down Redis");
+                this.redisPool.close();
+                return CompletableFuture.completedFuture(null);
+            });
+        }
     }
 
     @Override
@@ -165,9 +167,6 @@ public class RedisModuleImpl implements RedisModule {
 
     @Override
     public Jedis getConnection(final int db) {
-        if (this.redisDefaultDb == null) {
-            return this.redisPool.getResource();
-        }
         final Jedis conn = this.redisPool.getResource();
         conn.select(db >= 0 ? db : 0);
         return conn;

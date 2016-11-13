@@ -3,6 +3,9 @@ language: java
 jdk:
     - oraclejdk8
 
+services:
+    - redis-server
+
 install:
     - mvn clean
     - mvn checkstyle:check
@@ -10,3 +13,6 @@ install:
 
 script:
     - mvn package
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
