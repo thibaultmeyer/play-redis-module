@@ -1,10 +1,10 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-16.08-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-16.11-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/0xbaadf00d/play-redis-module.svg)](https://jitpack.io/#0xbaadf00d/play-redis-module)
 [![Build](https://img.shields.io/travis-ci/0xbaadf00d/play-redis-module.svg?branch=master&style=flat)](https://travis-ci.org/0xbaadf00d/play-redis-module)
-[![codecov](https://codecov.io/gh/0xbaadf00d/play-redis-module/branch/master/graph/badge.svg)](https://codecov.io/gh/0xbaadf00d/play-redis-module)
+[![codecov](https://codecov.io/gh/0xbaadf00d/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/0xbaadf00d/play-redis-module)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/0xbaadf00d/play-redis-module/master/LICENSE)
 
 Redis module for Play Framework 2
