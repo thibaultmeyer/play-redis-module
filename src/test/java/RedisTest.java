@@ -47,7 +47,7 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 16.11.13
+ * @version 16.11.16
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -183,6 +183,10 @@ public class RedisTest {
         numbers = this.redisModule.getFromList("junit.item2", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
+
+        numbers = this.redisModule.getFromList("junit.item2", new TypeReference<Integer>() {
+        }, 0, 2);
+        Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3});
     }
 
     /**
