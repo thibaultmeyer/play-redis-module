@@ -47,7 +47,7 @@ import java.util.concurrent.CompletableFuture;
  * Implementation of {@code RedisModule}.
  *
  * @author Thibault Meyer
- * @version 16.11.13
+ * @version 17.02.02
  * @see RedisModule
  * @since 16.03.09
  */
@@ -344,5 +344,25 @@ public class RedisModuleImpl implements RedisModule {
             RedisModuleImpl.LOG.error("Can't connect to Redis: {}", ex.getMessage());
         }
         return ret == 1;
+    }
+
+    @Override
+    public Long increment(final String key) {
+        return this.increment(key, -1);
+    }
+
+    @Override
+    public Long increment(final String key, final int expiration) {
+        final Long value;
+        try (final Jedis jedis = this.redisPool.getResource()) {
+            if (this.redisDefaultDb != null) {
+                jedis.select(this.redisDefaultDb);
+            }
+            value = jedis.incr(key);
+            if (expiration > 0 && value == 1) {
+                jedis.expire(key, expiration);
+            }
+        }
+        return value;
     }
 }

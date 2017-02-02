@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 16.10.14
+ * @version 17.02.02
  * @since 16.03.09
  */
 public interface RedisModule {
@@ -203,4 +203,25 @@ public interface RedisModule {
      * @since 16.08.09
      */
     boolean tryLock(final String key, final int expiration);
+
+    /**
+     * Increment an integer value. It key does not exists, it will be
+     * created automatically.
+     *
+     * @param key The value key
+     * @return The incremented value
+     * @since 17.02.02
+     */
+    Long increment(final String key);
+
+    /**
+     * Increment an integer value. It key does not exists, it will be
+     * created automatically.
+     *
+     * @param key        The value key
+     * @param expiration The value TTL
+     * @return The incremented value
+     * @since 17.02.02
+     */
+    Long increment(final String key, final int expiration);
 }
