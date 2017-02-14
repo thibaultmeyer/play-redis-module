@@ -47,7 +47,7 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 16.11.16
+ * @version 17.02.14
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -94,7 +94,8 @@ public class RedisTest {
             this.redisModule.remove(
                     "junit.lock",
                     "junit.item",
-                    "junit.item2"
+                    "junit.item2",
+                    "junit.counter"
             );
         }
     }
@@ -122,6 +123,11 @@ public class RedisTest {
         Assert.assertTrue(isLockAcquired);
 
         isLockAcquired = this.redisModule.tryLock("junit.lock", 900);
+        Assert.assertFalse(isLockAcquired);
+
+        this.redisModule.set("junit.item", new TypeReference<String>() {
+        }, "Hello World!", 900);
+        isLockAcquired = this.redisModule.tryLock("junit.item", 900);
         Assert.assertFalse(isLockAcquired);
     }
 
@@ -227,5 +233,34 @@ public class RedisTest {
         final String data = this.redisModule.getOrElse("junit.item", new TypeReference<String>() {
         }, () -> "getOrElse");
         Assert.assertEquals("getOrElse", data);
+
+        // This test will raise a Cast exception on the method "get"
+        final Long l = this.redisModule.getOrElse("junit.item", new TypeReference<Long>() {
+        }, () -> 42L);
+        Assert.assertEquals(42, l.longValue());
+    }
+
+    /**
+     * @since 17.02.14
+     */
+    @Test
+    public void redisTest_008_increment() throws InterruptedException {
+        Long counter = this.redisModule.increment("junit.counter", 2);
+        Assert.assertEquals(1, counter.longValue());
+        Thread.sleep(2500);
+        counter = this.redisModule.increment("junit.counter", 2);
+        Assert.assertEquals(1, counter.longValue());
+        this.redisModule.remove("junit.counter");
+
+        counter = this.redisModule.increment("junit.counter");
+        Assert.assertEquals(1, counter.longValue());
+        counter = this.redisModule.increment("junit.counter");
+        Assert.assertEquals(2, counter.longValue());
+
+        counter = this.redisModule.increment("junit.counter", 2);
+        Assert.assertEquals(3, counter.longValue());
+        Thread.sleep(2500);
+        counter = this.redisModule.increment("junit.counter", 2);
+        Assert.assertEquals(4, counter.longValue());
     }
 }
