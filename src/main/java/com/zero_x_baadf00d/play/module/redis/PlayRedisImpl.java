@@ -44,22 +44,22 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Implementation of {@code RedisModule}.
+ * Implementation of {@code PlayRedis}.
  *
  * @author Thibault Meyer
- * @version 17.02.02
- * @see RedisModule
+ * @version 17.03.25
+ * @see PlayRedis
  * @since 16.03.09
  */
 @Singleton
-public class RedisModuleImpl implements RedisModule {
+public class PlayRedisImpl implements PlayRedis {
 
     /**
      * Logger instance.
      *
      * @since 16.05.07
      */
-    private static final Logger.ALogger LOG = Logger.of(RedisModule.class);
+    private static final Logger.ALogger LOG = Logger.of(PlayRedis.class);
 
     /**
      * @since 16.03.09
@@ -123,15 +123,15 @@ public class RedisModuleImpl implements RedisModule {
      * @since 16.03.09
      */
     @Inject
-    public RedisModuleImpl(final ApplicationLifecycle lifecycle, final Configuration configuration) {
-        final String redisHost = configuration.getString(RedisModuleImpl.REDISPOOL_SERVER_HOST, "127.0.0.1");
-        final String redisPassword = configuration.getString(RedisModuleImpl.REDISPOOL_SERVER_PASSWORD);
-        final Integer redisPort = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_PORT, 6379);
-        final Integer redisConnTimeout = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_CONN_TIMEOUT, 0);
-        final Integer redisConnTotal = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_CONN_TOTAL, 64);
-        final Integer redisConnMaxIdle = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_CONN_MAXIDLE, 16);
-        final Integer redisConnMinIdle = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_CONN_MINIDLE, redisConnMaxIdle / 2);
-        this.redisDefaultDb = configuration.getInt(RedisModuleImpl.REDISPOOL_SERVER_DB_DEFAULT, null);
+    public PlayRedisImpl(final ApplicationLifecycle lifecycle, final Configuration configuration) {
+        final String redisHost = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_HOST, "127.0.0.1");
+        final String redisPassword = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD);
+        final Integer redisPort = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_PORT, 6379);
+        final Integer redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT, 0);
+        final Integer redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL, 64);
+        final Integer redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE, 16);
+        final Integer redisConnMinIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE, redisConnMaxIdle / 2);
+        this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT, null);
         if (redisHost != null) {
             final JedisPoolConfig poolConfig = new JedisPoolConfig();
             poolConfig.setMinIdle(redisConnMinIdle > 0 ? redisConnMinIdle : 1);
@@ -142,13 +142,13 @@ public class RedisModuleImpl implements RedisModule {
             } else {
                 this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
             }
-            RedisModuleImpl.LOG.info("Redis connected at {}", String.format("redis://%s:%d", redisHost, redisPort));
+            PlayRedisImpl.LOG.info("Redis connected at {}", String.format("redis://%s:%d", redisHost, redisPort));
         } else {
             throw new RuntimeException("Redis module is not properly configured");
         }
         if (lifecycle != null) {
             lifecycle.addStopHook(() -> {
-                RedisModuleImpl.LOG.info("Shutting down Redis");
+                PlayRedisImpl.LOG.info("Shutting down Redis");
                 this.redisPool.close();
                 return CompletableFuture.completedFuture(null);
             });
@@ -187,7 +187,7 @@ public class RedisModuleImpl implements RedisModule {
                 object = Json.mapper().readerFor(typeReference).readValue(rawData.getBytes());
             }
         } catch (IOException ex) {
-            RedisModuleImpl.LOG.error("Can't get object", ex);
+            PlayRedisImpl.LOG.error("Can't get object", ex);
         }
         return object;
     }
@@ -211,7 +211,7 @@ public class RedisModuleImpl implements RedisModule {
                 }
             }
         } catch (IOException ex) {
-            RedisModuleImpl.LOG.error("Can't set object", ex);
+            PlayRedisImpl.LOG.error("Can't set object", ex);
         }
     }
 
@@ -228,7 +228,7 @@ public class RedisModuleImpl implements RedisModule {
                 data = block.call();
                 this.set(key, typeReference, data, expiration);
             } catch (Exception ex) {
-                RedisModuleImpl.LOG.error("Something goes wrong during the Callable execution", ex);
+                PlayRedisImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
         }
         return data;
@@ -279,7 +279,7 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.lpush(key, data);
             }
         } catch (IOException ex) {
-            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
@@ -295,7 +295,7 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
         } catch (IOException ex) {
-            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
@@ -322,7 +322,7 @@ public class RedisModuleImpl implements RedisModule {
                 }
             }
         } catch (IOException | NullPointerException ex) {
-            RedisModuleImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
         return objects;
     }
@@ -339,9 +339,9 @@ public class RedisModuleImpl implements RedisModule {
                 jedis.expire(key, expiration);
             }
         } catch (JedisConnectionException ex) {
-            RedisModuleImpl.LOG.error("Can't connect to Redis: {}", ex.getCause().getMessage());
+            PlayRedisImpl.LOG.error("Can't connect to Redis: {}", ex.getCause().getMessage());
         } catch (JedisDataException ex) {
-            RedisModuleImpl.LOG.error("Can't connect to Redis: {}", ex.getMessage());
+            PlayRedisImpl.LOG.error("Can't connect to Redis: {}", ex.getMessage());
         }
         return ret == 1;
     }

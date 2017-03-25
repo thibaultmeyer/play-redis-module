@@ -20,11 +20,6 @@ Redis module for Play Framework 2
 
 #### application.conf
 
-    # Play Modules
-    # ~~~~~
-    play.modules.enabled += "com.zero_x_baadf00d.play.module.redis.RedisModuleBinder"
-
-
     # Play Redis Module
     # ~~~~~
     redis.default.host          = "127.0.0.1"
@@ -45,15 +40,15 @@ Redis module for Play Framework 2
 ```java
     public class MyController extends Controller {
 
-        private final RedisModule redisModule;
+        private final PlayRedis playRedis;
 
         @Inject
-        public MyController(final RedisModule redisModule) {
-            this.redisModule = redisModule;
+        public MyController(final PlayRedis playRedis) {
+            this.playRedis = playRedis;
         }
 
         public Result index() {
-            final String token = this.redisModule.getOrElse("key", new TypeReference<String>() {}, () -> {
+            final String token = this.playRedis.getOrElse("key", new TypeReference<String>() {}, () -> {
                 return "new-token";
             }, 60);
             return ok(token);
@@ -68,10 +63,10 @@ Redis module for Play Framework 2
     public class MyController extends Controller {
 
         @Inject
-        private final RedisModule redisModule;
+        private final PlayRedis playRedis;
 
         public Result index() {
-            final List<String> tokens = this.redisModule.getOrElse("key", new TypeReference<List<String>>() {}, () -> {
+            final List<String> tokens = this.playRedis.getOrElse("key", new TypeReference<List<String>>() {}, () -> {
                 final List<String> tokens = new ArrayList<>();
                 tokens.add("token 1");
                 tokens.add("token 2");
@@ -86,8 +81,8 @@ Redis module for Play Framework 2
 #### Example 3
 
 ```java
-    final RedisModule redisModule = Play.application().injector().instanceOf(RedisModule.class);
-    try (final Jedis jedis = redisModule.getConnection()) {
+    final PlayRedis playRedis = Play.application().injector().instanceOf(PlayRedis.class);
+    try (final Jedis jedis = playRedis.getConnection()) {
         jedis.set("key", "Hello World!")
         jedis.expire("key", 60);
     }

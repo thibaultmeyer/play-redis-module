@@ -23,9 +23,9 @@
  */
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.zero_x_baadf00d.play.module.redis.RedisModule;
-import com.zero_x_baadf00d.play.module.redis.RedisModuleBinder;
-import com.zero_x_baadf00d.play.module.redis.RedisModuleImpl;
+import com.zero_x_baadf00d.play.module.redis.PlayRedis;
+import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
+import com.zero_x_baadf00d.play.module.redis.PlayRedisModule;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -38,6 +38,7 @@ import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
 import redis.clients.jedis.Jedis;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -47,18 +48,25 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 17.02.14
+ * @version 17.03.25
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RedisTest {
 
     /**
-     * Handle to the Redis module
+     * Handle to the Redis module.
      *
      * @since 16.11.13
      */
-    private RedisModule redisModule;
+    private PlayRedis playRedis;
+
+    /**
+     * Handle to the current application instance.
+     *
+     * @since 17.03.25
+     */
+    private Application application;
 
     /**
      * Initialize Redis module.
@@ -67,35 +75,41 @@ public class RedisTest {
      */
     @Before
     public void initializeRedisModule() {
-        if (this.redisModule == null) {
-            final Application application = Helpers.
-                    fakeApplication(new HashMap<String, Object>() {{
-                        put("redis.default.db.default", 0);
-                        put("redis.default.host", "127.0.0.1");
-                        put("redis.default.port", 6379);
-                    }});
+        if (this.playRedis == null) {
+            this.application = Helpers.
+                fakeApplication(new HashMap<String, Object>() {{
+                    put(
+                        "play.modules.disabled",
+                        Collections.singletonList(
+                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
+                        )
+                    );
+                    put("redis.default.db.default", 0);
+                    put("redis.default.host", "127.0.0.1");
+                    put("redis.default.port", 6379);
+                }});
             Assert.assertEquals(
-                    (Long) 0L,
-                    application.configuration().getLong("redis.default.db.default")
+                (Long) 0L,
+                this.application.configuration().getLong("redis.default.db.default")
             );
             Assert.assertEquals(
-                    "127.0.0.1",
-                    application.configuration().getString("redis.default.host")
+                "127.0.0.1",
+                this.application.configuration().getString("redis.default.host")
             );
             Assert.assertEquals(
-                    (Long) 6379L,
-                    application.configuration().getLong("redis.default.port")
+                (Long) 6379L,
+                this.application.configuration().getLong("redis.default.port")
             );
-            this.redisModule = new RedisModuleImpl(
-                    mock(ApplicationLifecycle.class),
-                    application.configuration()
+            this.playRedis = new PlayRedisImpl(
+                mock(ApplicationLifecycle.class),
+                this.application.configuration()
             );
-            Assert.assertNotEquals(null, this.redisModule);
-            this.redisModule.remove(
-                    "junit.lock",
-                    "junit.item",
-                    "junit.item2",
-                    "junit.counter"
+            Assert.assertNotEquals(null, this.playRedis);
+            this.playRedis.remove(
+                "junit.lock",
+                "junit.item",
+                "junit.item2",
+                "junit.counter"
             );
         }
     }
@@ -105,12 +119,12 @@ public class RedisTest {
      */
     @Test
     public void redisTest_000_binding() {
-        final Module module = new RedisModuleBinder();
+        final Module module = new PlayRedisModule();
         Assert.assertEquals(1,
-                module.bindings(
-                        mock(Environment.class),
-                        Helpers.fakeApplication().configuration().getWrappedConfiguration()
-                ).length()
+            module.bindings(
+                mock(Environment.class),
+                this.application.configuration().getWrappedConfiguration()
+            ).length()
         );
     }
 
@@ -119,15 +133,15 @@ public class RedisTest {
      */
     @Test
     public void redisTest_001_tryLock() {
-        boolean isLockAcquired = this.redisModule.tryLock("junit.lock", 900);
+        boolean isLockAcquired = this.playRedis.tryLock("junit.lock", 900);
         Assert.assertTrue(isLockAcquired);
 
-        isLockAcquired = this.redisModule.tryLock("junit.lock", 900);
+        isLockAcquired = this.playRedis.tryLock("junit.lock", 900);
         Assert.assertFalse(isLockAcquired);
 
-        this.redisModule.set("junit.item", new TypeReference<String>() {
+        this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "Hello World!", 900);
-        isLockAcquired = this.redisModule.tryLock("junit.item", 900);
+        isLockAcquired = this.playRedis.tryLock("junit.item", 900);
         Assert.assertFalse(isLockAcquired);
     }
 
@@ -136,15 +150,15 @@ public class RedisTest {
      */
     @Test
     public void redisTest_002_set_get() {
-        this.redisModule.set("junit.item", new TypeReference<String>() {
+        this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "Hello World!");
-        final String helloWorld = this.redisModule.get("junit.item", new TypeReference<String>() {
+        final String helloWorld = this.playRedis.get("junit.item", new TypeReference<String>() {
         });
         Assert.assertEquals("Hello World!", helloWorld);
 
-        this.redisModule.set("junit.item", new TypeReference<Integer>() {
+        this.playRedis.set("junit.item", new TypeReference<Integer>() {
         }, 42);
-        final Long number = this.redisModule.get("junit.item", new TypeReference<Long>() {
+        final Long number = this.playRedis.get("junit.item", new TypeReference<Long>() {
         });
         Assert.assertEquals((Long) 42L, number);
     }
@@ -154,11 +168,11 @@ public class RedisTest {
      */
     @Test
     public void redisTest_003_exists() throws InterruptedException {
-        this.redisModule.set("junit.item", new TypeReference<String>() {
+        this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "Hello World!", 2);
-        Assert.assertTrue(this.redisModule.exists("junit.item"));
+        Assert.assertTrue(this.playRedis.exists("junit.item"));
         Thread.sleep(2500);
-        Assert.assertFalse(this.redisModule.exists("junit.item"));
+        Assert.assertFalse(this.playRedis.exists("junit.item"));
     }
 
     /**
@@ -166,31 +180,31 @@ public class RedisTest {
      */
     @Test
     public void redisTest_004_addInList() {
-        this.redisModule.addInList("junit.item", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 1);
-        this.redisModule.addInList("junit.item", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 4);
-        this.redisModule.addInList("junit.item", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 3);
-        this.redisModule.addInList("junit.item", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 2);
-        List<Integer> numbers = this.redisModule.getFromList("junit.item", new TypeReference<Integer>() {
+        List<Integer> numbers = this.playRedis.getFromList("junit.item", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4, 1});
 
-        this.redisModule.addInList("junit.item2", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 1, 3);
-        this.redisModule.addInList("junit.item2", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 4, 3);
-        this.redisModule.addInList("junit.item2", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 3, 3);
-        this.redisModule.addInList("junit.item2", new TypeReference<Integer>() {
+        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 2, 3);
-        numbers = this.redisModule.getFromList("junit.item2", new TypeReference<Integer>() {
+        numbers = this.playRedis.getFromList("junit.item2", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
 
-        numbers = this.redisModule.getFromList("junit.item2", new TypeReference<Integer>() {
+        numbers = this.playRedis.getFromList("junit.item2", new TypeReference<Integer>() {
         }, 0, 2);
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3});
     }
@@ -200,15 +214,15 @@ public class RedisTest {
      */
     @Test
     public void redisTest_005_getConnection() {
-        try (final Jedis conn = this.redisModule.getConnection()) {
+        try (final Jedis conn = this.playRedis.getConnection()) {
             conn.set("junit.item", "test@domain.local");
             Assert.assertTrue(conn.exists("junit.item"));
             Assert.assertEquals(
-                    "test@domain.local",
-                    conn.get("junit.item")
+                "test@domain.local",
+                conn.get("junit.item")
             );
         }
-        try (final Jedis conn = this.redisModule.getConnection(1)) {
+        try (final Jedis conn = this.playRedis.getConnection(1)) {
             Assert.assertFalse(conn.exists("junit.item"));
         }
     }
@@ -218,11 +232,11 @@ public class RedisTest {
      */
     @Test
     public void redisTest_006_remove() {
-        this.redisModule.set("junit.item", new TypeReference<String>() {
+        this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "test");
-        Assert.assertTrue(this.redisModule.exists("junit.item"));
-        this.redisModule.remove("junit.item");
-        Assert.assertFalse(this.redisModule.exists("junit.item"));
+        Assert.assertTrue(this.playRedis.exists("junit.item"));
+        this.playRedis.remove("junit.item");
+        Assert.assertFalse(this.playRedis.exists("junit.item"));
     }
 
     /**
@@ -230,12 +244,12 @@ public class RedisTest {
      */
     @Test
     public void redisTest_007_getOrElse() {
-        final String data = this.redisModule.getOrElse("junit.item", new TypeReference<String>() {
+        final String data = this.playRedis.getOrElse("junit.item", new TypeReference<String>() {
         }, () -> "getOrElse");
         Assert.assertEquals("getOrElse", data);
 
         // This test will raise a Cast exception on the method "get"
-        final Long l = this.redisModule.getOrElse("junit.item", new TypeReference<Long>() {
+        final Long l = this.playRedis.getOrElse("junit.item", new TypeReference<Long>() {
         }, () -> 42L);
         Assert.assertEquals(42, l.longValue());
     }
@@ -245,22 +259,22 @@ public class RedisTest {
      */
     @Test
     public void redisTest_008_increment() throws InterruptedException {
-        Long counter = this.redisModule.increment("junit.counter", 2);
+        Long counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(1, counter.longValue());
         Thread.sleep(2500);
-        counter = this.redisModule.increment("junit.counter", 2);
+        counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(1, counter.longValue());
-        this.redisModule.remove("junit.counter");
+        this.playRedis.remove("junit.counter");
 
-        counter = this.redisModule.increment("junit.counter");
+        counter = this.playRedis.increment("junit.counter");
         Assert.assertEquals(1, counter.longValue());
-        counter = this.redisModule.increment("junit.counter");
+        counter = this.playRedis.increment("junit.counter");
         Assert.assertEquals(2, counter.longValue());
 
-        counter = this.redisModule.increment("junit.counter", 2);
+        counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(3, counter.longValue());
         Thread.sleep(2500);
-        counter = this.redisModule.increment("junit.counter", 2);
+        counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(4, counter.longValue());
     }
 }

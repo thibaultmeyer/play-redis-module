@@ -23,8 +23,8 @@
  */
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.zero_x_baadf00d.play.module.redis.RedisModule;
-import com.zero_x_baadf00d.play.module.redis.RedisModuleImpl;
+import com.zero_x_baadf00d.play.module.redis.PlayRedis;
+import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -35,6 +35,7 @@ import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.mockito.Mockito.mock;
@@ -43,18 +44,18 @@ import static org.mockito.Mockito.mock;
  * RedisFailureTest.
  *
  * @author Thibault Meyer
- * @version 17.02.14
+ * @version 17.03.25
  * @since 17.02.14
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RedisFailureTest {
 
     /**
-     * Handle to the Redis module
+     * Handle to the Redis module.
      *
      * @since 17.02.14
      */
-    private RedisModule redisModule;
+    private PlayRedis playRedis;
 
     /**
      * Initialize Redis module.
@@ -63,18 +64,24 @@ public class RedisFailureTest {
      */
     @Before
     public void initializeRedisModule() {
-        if (this.redisModule == null) {
+        if (this.playRedis == null) {
             final Application application = Helpers.
-                    fakeApplication(new HashMap<String, Object>() {{
-                        put("redis.default.db.default", 0);
-                        put("redis.default.host", "127.0.0.1");
-                        put("redis.default.port", 6380);
-                    }});
-            this.redisModule = new RedisModuleImpl(
-                    mock(ApplicationLifecycle.class),
-                    application.configuration()
+                fakeApplication(new HashMap<String, Object>() {{
+                    put(
+                        "play.modules.disabled",
+                        Collections.singletonList(
+                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
+                        )
+                    );
+                    put("redis.default.db.default", 0);
+                    put("redis.default.host", "127.0.0.1");
+                    put("redis.default.port", 6380);
+                }});
+            this.playRedis = new PlayRedisImpl(
+                mock(ApplicationLifecycle.class),
+                application.configuration()
             );
-            Assert.assertNotEquals(null, this.redisModule);
+            Assert.assertNotEquals(null, this.playRedis);
         }
     }
 
@@ -83,7 +90,7 @@ public class RedisFailureTest {
      */
     @Test
     public void redisFailureTest_001_tryLock() {
-        boolean isLockAcquired = this.redisModule.tryLock("junit.lock", 900);
+        boolean isLockAcquired = this.playRedis.tryLock("junit.lock", 900);
         Assert.assertFalse(isLockAcquired);
     }
 
@@ -93,7 +100,7 @@ public class RedisFailureTest {
     @Test
     public void redisFailureTest_002_set_get() {
         try {
-            this.redisModule.set("junit.item", new TypeReference<String>() {
+            this.playRedis.set("junit.item", new TypeReference<String>() {
             }, "Hello World!");
             Assert.fail();
         } catch (JedisConnectionException ignore) {

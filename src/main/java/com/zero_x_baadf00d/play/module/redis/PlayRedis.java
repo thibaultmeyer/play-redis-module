@@ -34,10 +34,10 @@ import java.util.concurrent.Callable;
  * a Redis database.
  *
  * @author Thibault Meyer
- * @version 17.02.02
+ * @version 17.03.25
  * @since 16.03.09
  */
-public interface RedisModule {
+public interface PlayRedis {
 
     /**
      * Get a Redis connection from the pool.

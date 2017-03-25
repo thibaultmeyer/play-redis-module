@@ -34,14 +34,14 @@ import scala.collection.Seq;
  * your {@code application.conf} file to enable Redis module.
  *
  * @author Thibault Meyer
- * @version 16.03.09
+ * @version 17.03.25
  * @see Module
  * @since 16.03.09
  */
-public class RedisModuleBinder extends Module {
+public class PlayRedisModule extends Module {
 
     @Override
     public Seq<Binding<?>> bindings(final Environment environment, final Configuration configuration) {
-        return seq(bind(RedisModule.class).to(RedisModuleImpl.class));
+        return seq(bind(PlayRedis.class).to(PlayRedisImpl.class));
     }
 }
