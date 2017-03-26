@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Implementation of {@code PlayRedis}.
@@ -147,12 +148,20 @@ public class PlayRedisImpl implements PlayRedis {
             throw new RuntimeException("Redis module is not properly configured");
         }
         if (lifecycle != null) {
-            lifecycle.addStopHook(() -> {
-                PlayRedisImpl.LOG.info("Shutting down Redis");
-                this.redisPool.close();
-                return CompletableFuture.completedFuture(null);
-            });
+            lifecycle.addStopHook(this::stopHook);
         }
+    }
+
+    /**
+     * Instructions to run when the module is destroyed.
+     *
+     * @return An empty {@code CompletionStage}.
+     * @since 17.03.26
+     */
+    public CompletionStage<?> stopHook() {
+        PlayRedisImpl.LOG.info("Shutting down Redis");
+        this.redisPool.close();
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override

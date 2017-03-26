@@ -23,66 +23,29 @@
  */
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.zero_x_baadf00d.play.module.redis.PlayRedis;
-import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import play.Application;
-import play.inject.ApplicationLifecycle;
-import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-
-import java.util.Collections;
-import java.util.HashMap;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * RedisFailureTest.
  *
  * @author Thibault Meyer
- * @version 17.03.25
+ * @version 17.03.26
  * @since 17.02.14
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class RedisFailureTest {
+public class RedisFailureTest extends AbstractRedisTest {
 
     /**
-     * Handle to the Redis module.
+     * Default constructor.
      *
-     * @since 17.02.14
+     * @since 17.03.26
      */
-    private PlayRedis playRedis;
-
-    /**
-     * Initialize Redis module.
-     *
-     * @since 17.02.14
-     */
-    @Before
-    public void initializeRedisModule() {
-        if (this.playRedis == null) {
-            final Application application = Helpers.
-                fakeApplication(new HashMap<String, Object>() {{
-                    put(
-                        "play.modules.disabled",
-                        Collections.singletonList(
-                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
-                        )
-                    );
-                    put("redis.default.db.default", 0);
-                    put("redis.default.host", "127.0.0.1");
-                    put("redis.default.port", 6380);
-                }});
-            this.playRedis = new PlayRedisImpl(
-                mock(ApplicationLifecycle.class),
-                application.configuration()
-            );
-            Assert.assertNotEquals(null, this.playRedis);
-        }
+    public RedisFailureTest() {
+        super(12345);
     }
 
     /**

@@ -23,23 +23,15 @@
  */
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.zero_x_baadf00d.play.module.redis.PlayRedis;
-import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
 import com.zero_x_baadf00d.play.module.redis.PlayRedisModule;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import play.Application;
 import play.api.Environment;
 import play.api.inject.Module;
-import play.inject.ApplicationLifecycle;
-import play.test.Helpers;
 import redis.clients.jedis.Jedis;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -48,70 +40,19 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 17.03.25
+ * @version 17.03.26
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class RedisTest {
+public class RedisTest extends AbstractRedisTest {
 
     /**
-     * Handle to the Redis module.
+     * Default constructor.
      *
-     * @since 16.11.13
+     * @since 17.03.26
      */
-    private PlayRedis playRedis;
-
-    /**
-     * Handle to the current application instance.
-     *
-     * @since 17.03.25
-     */
-    private Application application;
-
-    /**
-     * Initialize Redis module.
-     *
-     * @since 16.11.13
-     */
-    @Before
-    public void initializeRedisModule() {
-        if (this.playRedis == null) {
-            this.application = Helpers.
-                fakeApplication(new HashMap<String, Object>() {{
-                    put(
-                        "play.modules.disabled",
-                        Collections.singletonList(
-                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
-                        )
-                    );
-                    put("redis.default.db.default", 0);
-                    put("redis.default.host", "127.0.0.1");
-                    put("redis.default.port", 6379);
-                }});
-            Assert.assertEquals(
-                (Long) 0L,
-                this.application.configuration().getLong("redis.default.db.default")
-            );
-            Assert.assertEquals(
-                "127.0.0.1",
-                this.application.configuration().getString("redis.default.host")
-            );
-            Assert.assertEquals(
-                (Long) 6379L,
-                this.application.configuration().getLong("redis.default.port")
-            );
-            this.playRedis = new PlayRedisImpl(
-                mock(ApplicationLifecycle.class),
-                this.application.configuration()
-            );
-            Assert.assertNotEquals(null, this.playRedis);
-            this.playRedis.remove(
-                "junit.lock",
-                "junit.item",
-                "junit.item2",
-                "junit.counter"
-            );
-        }
+    public RedisTest() {
+        super(6379);
     }
 
     /**
