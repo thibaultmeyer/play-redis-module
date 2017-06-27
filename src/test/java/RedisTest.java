@@ -40,7 +40,7 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 17.03.26
+ * @version 17.05.26
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

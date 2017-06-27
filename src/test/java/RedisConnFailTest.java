@@ -23,9 +23,8 @@
  */
 
 import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.*;
+import org.junit.runners.MethodSorters;
 import play.Application;
 import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
@@ -38,49 +37,33 @@ import java.util.concurrent.ExecutionException;
 import static org.mockito.Mockito.mock;
 
 /**
- * All unit test classes must extend this class.
+ * RedisConnFailTest.
  *
  * @author Thibault Meyer
  * @version 17.06.26
- * @since 17.03.26
+ * @since 17.06.26
  */
-public class AbstractRedisTest {
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+public class RedisConnFailTest {
 
     /**
      * Handle to the Redis module.
      *
-     * @since 17.03.26
+     * @since 17.06.26
      */
     protected PlayRedisImpl playRedis;
 
     /**
      * Handle to the current application instance.
      *
-     * @since 17.03.25
+     * @since 17.06.26
      */
     protected Application application;
 
     /**
-     * The Redis listen port to use.
-     *
-     * @since 17.03.26
-     */
-    private Integer redisPort;
-
-    /**
-     * Default constructor.
-     *
-     * @param redisPort The redis port number to use
-     * @since 17.03.26
-     */
-    AbstractRedisTest(final Integer redisPort) {
-        this.redisPort = redisPort;
-    }
-
-    /**
      * Initialize Redis module.
      *
-     * @since 17.03.26
+     * @since 17.06.26
      */
     @Before
     public void initializeRedisModule() {
@@ -93,9 +76,9 @@ public class AbstractRedisTest {
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
                         )
                     );
-                    put("redis.default.db.default", 0);
                     put("redis.default.host", "127.0.0.1");
-                    put("redis.default.port", redisPort);
+                    put("redis.default.port", 6379);
+                    put("redis.default.password", "false-password");
                 }});
             Assert.assertEquals(
                 0,
@@ -106,30 +89,21 @@ public class AbstractRedisTest {
                 this.application.config().getString("redis.default.host")
             );
             Assert.assertEquals(
-                redisPort.longValue(),
-                this.application.config().getLong("redis.default.port")
+                "false-password",
+                this.application.config().getString("redis.default.password")
             );
             this.playRedis = new PlayRedisImpl(
                 mock(ApplicationLifecycle.class),
                 this.application.config()
             );
             Assert.assertNotEquals(null, this.playRedis);
-            try {
-                this.playRedis.remove(
-                    "junit.lock",
-                    "junit.item",
-                    "junit.item2",
-                    "junit.counter"
-                );
-            } catch (JedisConnectionException ignore) {
-            }
         }
     }
 
     /**
      * Destroy Redis module.
      *
-     * @since 17.03.26
+     * @since 17.06.26
      */
     @After
     public void destroyRedis() {
@@ -144,5 +118,22 @@ public class AbstractRedisTest {
                 Assert.fail();
             }
         }
+    }
+
+    /**
+     * @since 17.06.26
+     */
+    @Test
+    public void redisConnTailTest_001_password_not_set() {
+        try {
+            this.playRedis.getConnection();
+        } catch (JedisConnectionException ex) {
+            if (!ex.getCause().getMessage().startsWith("ERR Client sent AUTH")) {
+                Assert.fail();
+            } else {
+                return;
+            }
+        }
+        Assert.fail();
     }
 }

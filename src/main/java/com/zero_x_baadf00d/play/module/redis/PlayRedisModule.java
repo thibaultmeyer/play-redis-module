@@ -34,7 +34,7 @@ import scala.collection.Seq;
  * your {@code application.conf} file to enable Redis module.
  *
  * @author Thibault Meyer
- * @version 17.03.25
+ * @version 17.06.26
  * @see Module
  * @since 16.03.09
  */

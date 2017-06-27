@@ -25,7 +25,7 @@ package com.zero_x_baadf00d.play.module.redis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectReader;
-import play.Configuration;
+import com.typesafe.config.Config;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.Json;
@@ -48,7 +48,7 @@ import java.util.concurrent.CompletionStage;
  * Implementation of {@code PlayRedis}.
  *
  * @author Thibault Meyer
- * @version 17.03.25
+ * @version 17.03.26
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -124,15 +124,20 @@ public class PlayRedisImpl implements PlayRedis {
      * @since 16.03.09
      */
     @Inject
-    public PlayRedisImpl(final ApplicationLifecycle lifecycle, final Configuration configuration) {
-        final String redisHost = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_HOST, "127.0.0.1");
-        final String redisPassword = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD);
-        final Integer redisPort = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_PORT, 6379);
-        final Integer redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT, 0);
-        final Integer redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL, 64);
-        final Integer redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE, 16);
-        final Integer redisConnMinIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE, redisConnMaxIdle / 2);
-        this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT, null);
+    public PlayRedisImpl(final ApplicationLifecycle lifecycle, final Config configuration) {
+        final String redisHost = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_HOST);
+        final String redisPassword;
+        if (configuration.hasPath(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD)) {
+            redisPassword = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD);
+        } else {
+            redisPassword = null;
+        }
+        final Integer redisPort = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_PORT);
+        final Integer redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT);
+        final Integer redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL);
+        final Integer redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE);
+        final Integer redisConnMinIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE);
+        this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT);
         if (redisHost != null) {
             final JedisPoolConfig poolConfig = new JedisPoolConfig();
             poolConfig.setMinIdle(redisConnMinIdle > 0 ? redisConnMinIdle : 1);
