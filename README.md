@@ -1,7 +1,7 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-17.03-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-17.06-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/0xbaadf00d/play-redis-module.svg)](https://jitpack.io/#0xbaadf00d/play-redis-module)
 [![Build](https://img.shields.io/travis-ci/0xbaadf00d/play-redis-module.svg?branch=master&style=flat)](https://travis-ci.org/0xbaadf00d/play-redis-module)
 [![codecov](https://codecov.io/gh/0xbaadf00d/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/0xbaadf00d/play-redis-module)
@@ -22,14 +22,22 @@ Redis module for Play Framework 2
 
     # Play Redis Module
     # ~~~~~
-    redis.default.host          = "127.0.0.1"
-    redis.default.port          = 6379
-    redis.default.password      = "your-password"
-    redis.default.db.default    = 0
-    redis.default.conn.timeout  = 0
-    redis.default.conn.maxtotal = 256
-    redis.default.conn.maxidle  = 32
-    redis.default.conn.minidle  = 8
+    redis {
+      default {
+        host = "127.0.0.1"
+        port = 6379
+        password = "your-password"  # Optional
+        db {
+          default = 0
+        }
+        conn {
+          timeout = 0
+          maxtotal = 256
+          maxidle  = 32
+          minidle  = 8
+        }
+      }
+    }
 
 
 
