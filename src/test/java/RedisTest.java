@@ -40,7 +40,8 @@ import static org.mockito.Mockito.mock;
  * RedisTest.
  *
  * @author Thibault Meyer
- * @version 17.05.26
+ * @author Pierre Adam
+ * @version 17.08.20
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -97,11 +98,19 @@ public class RedisTest extends AbstractRedisTest {
         });
         Assert.assertEquals("Hello World!", helloWorld);
 
+        this.playRedis.set("junit.item", String.class, "Hello World! class");
+        final String helloWorld2 = this.playRedis.get("junit.item", String.class);
+        Assert.assertEquals("Hello World! class", helloWorld2);
+
         this.playRedis.set("junit.item", new TypeReference<Integer>() {
         }, 42);
         final Long number = this.playRedis.get("junit.item", new TypeReference<Long>() {
         });
         Assert.assertEquals((Long) 42L, number);
+
+        this.playRedis.set("junit.item", Long.class, 1337L);
+        final Long number2 = this.playRedis.get("junit.item", Long.class);
+        Assert.assertEquals((Long) 1337L, number2);
     }
 
     /**
@@ -125,10 +134,8 @@ public class RedisTest extends AbstractRedisTest {
         }, 1);
         this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 4);
-        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
-        }, 3);
-        this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
-        }, 2);
+        this.playRedis.addInList("junit.item", Integer.class, 3);
+        this.playRedis.addInList("junit.item", Integer.class, 2);
         List<Integer> numbers = this.playRedis.getFromList("junit.item", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4, 1});
@@ -137,10 +144,8 @@ public class RedisTest extends AbstractRedisTest {
         }, 1, 3);
         this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 4, 3);
-        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
-        }, 3, 3);
-        this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
-        }, 2, 3);
+        this.playRedis.addInList("junit.item2", Integer.class, 3, 3);
+        this.playRedis.addInList("junit.item2", Integer.class, 2, 3);
         numbers = this.playRedis.getFromList("junit.item2", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
