@@ -24,7 +24,9 @@
 package com.zero_x_baadf00d.play.module.redis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.typesafe.config.Config;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
@@ -48,6 +50,7 @@ import java.util.concurrent.CompletionStage;
  * Implementation of {@code PlayRedis}.
  *
  * @author Thibault Meyer
+ * @author Pierre Adam
  * @version 17.03.26
  * @see PlayRedis
  * @since 16.03.09
@@ -107,14 +110,14 @@ public class PlayRedisImpl implements PlayRedis {
      *
      * @since 16.03.09
      */
-    private JedisPool redisPool;
+    private final JedisPool redisPool;
 
     /**
      * The database number to use by default.
      *
      * @since 16.03.09
      */
-    private Integer redisDefaultDb;
+    private final Integer redisDefaultDb;
 
     /**
      * Build a basic instance with injected dependency.
@@ -188,6 +191,29 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public <T> T get(final String key, final TypeReference<T> typeReference) {
+        return this.get(key, Json.mapper().readerFor(typeReference));
+    }
+
+    @Override
+    public <T> T get(final String key, final Class<?> clazz) {
+        return this.get(key, Json.mapper().readerFor(clazz));
+    }
+
+    @Override
+    public <T> T get(final String key, final JavaType javaType) {
+        return this.get(key, Json.mapper().readerFor(javaType));
+    }
+
+    /**
+     * Retrieves an object by key.
+     *
+     * @param key    Item key
+     * @param reader The object reader
+     * @param <T>    Generic type of something
+     * @return The object or null.
+     * @since 17.08.20
+     */
+    private <T> T get(final String key, final ObjectReader reader) {
         T object = null;
         try {
             final String rawData;
@@ -198,9 +224,9 @@ public class PlayRedisImpl implements PlayRedis {
                 rawData = jedis.get(key);
             }
             if (rawData != null) {
-                object = Json.mapper().readerFor(typeReference).readValue(rawData.getBytes());
+                object = reader.readValue(rawData.getBytes());
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             PlayRedisImpl.LOG.error("Can't get object", ex);
         }
         return object;
@@ -213,8 +239,40 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration) {
+        this.set(key, Json.mapper().writerFor(typeReference), value, expiration);
+    }
+
+    @Override
+    public void set(final String key, final Class<?> clazz, final Object value) {
+        this.set(key, clazz, value, 0);
+    }
+
+    @Override
+    public void set(final String key, final Class<?> clazz, final Object value, final int expiration) {
+        this.set(key, Json.mapper().writerFor(clazz), value, expiration);
+    }
+
+    @Override
+    public void set(final String key, final JavaType javaType, final Object value) {
+        this.set(key, javaType, value, 0);
+    }
+
+    @Override
+    public void set(final String key, final JavaType javaType, final Object value, final int expiration) {
+        this.set(key, Json.mapper().writerFor(javaType), value, expiration);
+    }
+
+    /**
+     * Sets a value without expiration.
+     *
+     * @param key    Item key
+     * @param writer The object writer
+     * @param value  The value to set
+     * @since 17.08.20
+     */
+    private void set(final String key, final ObjectWriter writer, final Object value, final int expiration) {
         try {
-            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
+            final String data = writer.writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -224,7 +282,7 @@ public class PlayRedisImpl implements PlayRedis {
                     jedis.expire(key, expiration);
                 }
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             PlayRedisImpl.LOG.error("Can't set object", ex);
         }
     }
@@ -235,13 +293,52 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block, final int expiration) {
-        T data = this.get(key, typeReference);
+    public <T> T getOrElse(final String key, final TypeReference<T> typeReference, final Callable<T> block,
+                           final int expiration) {
+        return this.getOrElse(key, Json.mapper().readerFor(typeReference), Json.mapper().writerFor(typeReference), block, expiration);
+    }
+
+    @Override
+    public <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block) {
+        return this.getOrElse(key, clazz, block, 0);
+    }
+
+    @Override
+    public <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block, final int expiration) {
+        return this.getOrElse(key, Json.mapper().readerFor(clazz), Json.mapper().writerFor(clazz), block, expiration);
+    }
+
+    @Override
+    public <T> T getOrElse(final String key, final JavaType javaType, final Callable<T> block) {
+        return this.getOrElse(key, javaType, block, 0);
+    }
+
+    @Override
+    public <T> T getOrElse(final String key, final JavaType javaType, final Callable<T> block, final int expiration) {
+        return this.getOrElse(key, Json.mapper().readerFor(javaType), Json.mapper().writerFor(javaType), block, expiration);
+    }
+
+    /**
+     * Retrieve a value from the cache, or set it from a default
+     * Callable function. The value has no expiration.
+     *
+     * @param key        Item key
+     * @param reader     The object reader
+     * @param writer     The object writer
+     * @param expiration The expiration in seconds
+     * @param block      Block returning value to set if key does not exist
+     * @param <T>        Generic type of something
+     * @return value
+     * @since 17.08.20
+     */
+    private <T> T getOrElse(final String key, final ObjectReader reader, final ObjectWriter writer,
+                            final Callable<T> block, final int expiration) {
+        T data = this.get(key, reader);
         if (data == null) {
             try {
                 data = block.call();
-                this.set(key, typeReference, data, expiration);
-            } catch (Exception ex) {
+                this.set(key, writer, data, expiration);
+            } catch (final Exception ex) {
                 PlayRedisImpl.LOG.error("Something goes wrong during the Callable execution", ex);
             }
         }
@@ -272,7 +369,7 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public boolean exists(final String key) {
-        boolean exists;
+        final boolean exists;
         try (final Jedis jedis = this.redisPool.getResource()) {
             if (this.redisDefaultDb != null) {
                 jedis.select(this.redisDefaultDb);
@@ -284,23 +381,71 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value) {
+        this.addInList(key, Json.mapper().writerFor(typeReference), value);
+    }
+
+    @Override
+    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value,
+                              final int maxItem) {
+        this.addInList(key, Json.mapper().writerFor(typeReference), value, maxItem);
+    }
+
+    @Override
+    public void addInList(final String key, final Class<?> clazz, final Object value) {
+        this.addInList(key, Json.mapper().writerFor(clazz), value);
+    }
+
+    @Override
+    public void addInList(final String key, final Class<?> clazz, final Object value,
+                          final int maxItem) {
+        this.addInList(key, Json.mapper().writerFor(clazz), value, maxItem);
+    }
+
+    @Override
+    public void addInList(final String key, final JavaType javaType, final Object value) {
+        this.addInList(key, Json.mapper().writerFor(javaType), value);
+    }
+
+    @Override
+    public void addInList(final String key, final JavaType javaType, final Object value,
+                          final int maxItem) {
+        this.addInList(key, Json.mapper().writerFor(javaType), value, maxItem);
+    }
+
+    /**
+     * Add a value in a list.
+     *
+     * @param key    The list key
+     * @param writer The object writer
+     * @param value  The value to add in the list
+     * @since 17.08.20
+     */
+    private void addInList(final String key, final ObjectWriter writer, final Object value) {
         try {
-            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
+            final String data = writer.writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
                 }
                 jedis.lpush(key, data);
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
 
-    @Override
-    public <T> void addInList(final String key, final TypeReference<T> typeReference, final Object value, final int maxItem) {
+    /**
+     * Add a value in a list.
+     *
+     * @param key     The list key
+     * @param writer  The object writer
+     * @param value   The value to add in the list
+     * @param maxItem The number of entries to keep in list
+     * @since 17.08.20
+     */
+    private void addInList(final String key, final ObjectWriter writer, final Object value, final int maxItem) {
         try {
-            final String data = Json.mapper().writerFor(typeReference).writeValueAsString(value);
+            final String data = writer.writeValueAsString(value);
             try (final Jedis jedis = this.redisPool.getResource()) {
                 if (this.redisDefaultDb != null) {
                     jedis.select(this.redisDefaultDb);
@@ -308,7 +453,7 @@ public class PlayRedisImpl implements PlayRedis {
                 jedis.lpush(key, data);
                 jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
         }
     }
@@ -319,7 +464,43 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset, final int count) {
+    public <T> List<T> getFromList(final String key, final TypeReference<T> typeReference, final int offset,
+                                   final int count) {
+        return this.getFromList(key, Json.mapper().readerFor(typeReference), offset, count);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final Class<?> clazz) {
+        return this.getFromList(key, clazz, 0, -1);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final Class<?> clazz, final int offset, final int count) {
+        return this.getFromList(key, Json.mapper().readerFor(clazz), offset, count);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final JavaType type) {
+        return this.getFromList(key, type, 0, -1);
+    }
+
+    @Override
+    public <T> List<T> getFromList(final String key, final JavaType type, final int offset, final int count) {
+        return this.getFromList(key, Json.mapper().readerFor(type), offset, count);
+    }
+
+    /**
+     * Get values from a list.
+     *
+     * @param key    The list key
+     * @param reader The object reader
+     * @param offset From where
+     * @param count  The number of items to retrieve
+     * @param <T>    Generic type of something implementing {@code java.io.Serializable}
+     * @return The values list
+     * @since 17.08.20
+     */
+    private <T> List<T> getFromList(final String key, final ObjectReader reader, final int offset, final int count) {
         final List<T> objects = new ArrayList<>();
         try {
             final List<String> rawData;
@@ -330,9 +511,8 @@ public class PlayRedisImpl implements PlayRedis {
                 rawData = jedis.lrange(key, offset, count > 0 ? count - 1 : count);
             }
             if (rawData != null) {
-                final ObjectReader objectReader = Json.mapper().readerFor(typeReference);
                 for (final String s : rawData) {
-                    objects.add(objectReader.readValue(s));
+                    objects.add(reader.readValue(s));
                 }
             }
         } catch (IOException | NullPointerException ex) {
@@ -352,9 +532,9 @@ public class PlayRedisImpl implements PlayRedis {
             if (ret == 1) {
                 jedis.expire(key, expiration);
             }
-        } catch (JedisConnectionException ex) {
+        } catch (final JedisConnectionException ex) {
             PlayRedisImpl.LOG.error("Can't connect to Redis: {}", ex.getCause().getMessage());
-        } catch (JedisDataException ex) {
+        } catch (final JedisDataException ex) {
             PlayRedisImpl.LOG.error("Can't connect to Redis: {}", ex.getMessage());
         }
         return ret == 1;
