@@ -23,6 +23,7 @@
  */
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.zero_x_baadf00d.play.module.redis.PlayRedisModule;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import play.api.Environment;
 import play.api.inject.Module;
+import play.libs.Json;
 import redis.clients.jedis.Jedis;
 
 import java.util.List;
@@ -92,6 +94,10 @@ public class RedisTest extends AbstractRedisTest {
      */
     @Test
     public void redisTest_002_set_get() {
+        final JavaType javaTypeString = Json.mapper()
+            .getTypeFactory()
+            .constructType(String.class);
+
         this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "Hello World!");
         final String helloWorld = this.playRedis.get("junit.item", new TypeReference<String>() {
@@ -101,6 +107,10 @@ public class RedisTest extends AbstractRedisTest {
         this.playRedis.set("junit.item", String.class, "Hello World! class");
         final String helloWorld2 = this.playRedis.get("junit.item", String.class);
         Assert.assertEquals("Hello World! class", helloWorld2);
+
+        this.playRedis.set("junit.item", javaTypeString, "Hello World! class");
+        final String helloWorld3 = this.playRedis.get("junit.item", javaTypeString);
+        Assert.assertEquals("Hello World! class", helloWorld3);
 
         this.playRedis.set("junit.item", new TypeReference<Integer>() {
         }, 42);
@@ -130,12 +140,16 @@ public class RedisTest extends AbstractRedisTest {
      */
     @Test
     public void redisTest_004_addInList() {
+        final JavaType javaTypeInteger = Json.mapper()
+            .getTypeFactory()
+            .constructType(Integer.class);
+
         this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 1);
         this.playRedis.addInList("junit.item", new TypeReference<Integer>() {
         }, 4);
         this.playRedis.addInList("junit.item", Integer.class, 3);
-        this.playRedis.addInList("junit.item", Integer.class, 2);
+        this.playRedis.addInList("junit.item", javaTypeInteger, 2);
         List<Integer> numbers = this.playRedis.getFromList("junit.item", new TypeReference<Integer>() {
         });
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4, 1});
@@ -145,13 +159,22 @@ public class RedisTest extends AbstractRedisTest {
         this.playRedis.addInList("junit.item2", new TypeReference<Integer>() {
         }, 4, 3);
         this.playRedis.addInList("junit.item2", Integer.class, 3, 3);
-        this.playRedis.addInList("junit.item2", Integer.class, 2, 3);
+        this.playRedis.addInList("junit.item2", javaTypeInteger, 2, 3);
+
         numbers = this.playRedis.getFromList("junit.item2", new TypeReference<Integer>() {
         });
+        Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
+        numbers = this.playRedis.getFromList("junit.item2", Integer.class);
+        Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
+        numbers = this.playRedis.getFromList("junit.item2", javaTypeInteger);
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3, 4});
 
         numbers = this.playRedis.getFromList("junit.item2", new TypeReference<Integer>() {
         }, 0, 2);
+        Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3});
+        numbers = this.playRedis.getFromList("junit.item2", Integer.class, 0, 2);
+        Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3});
+        numbers = this.playRedis.getFromList("junit.item2", javaTypeInteger, 0, 2);
         Assert.assertArrayEquals(numbers.toArray(), new Integer[]{2, 3});
     }
 
@@ -190,8 +213,18 @@ public class RedisTest extends AbstractRedisTest {
      */
     @Test
     public void redisTest_007_getOrElse() {
-        final String data = this.playRedis.getOrElse("junit.item", new TypeReference<String>() {
+        final JavaType javaTypeString = Json.mapper()
+            .getTypeFactory()
+            .constructType(String.class);
+
+        String data = this.playRedis.getOrElse("junit.item", new TypeReference<String>() {
         }, () -> "getOrElse");
+        Assert.assertEquals("getOrElse", data);
+
+        data = this.playRedis.getOrElse("junit.item", String.class, () -> "getOrElse");
+        Assert.assertEquals("getOrElse", data);
+
+        data = this.playRedis.getOrElse("junit.item", javaTypeString, () -> "getOrElse");
         Assert.assertEquals("getOrElse", data);
 
         // This test will raise a Cast exception on the method "get"
