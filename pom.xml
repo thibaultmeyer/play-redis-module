@@ -12,7 +12,7 @@
     <url>https://github.com/0xbaadf00d/play-redis-module</url>
 
     <scm>
-        <connection>scm:git:https://github.com/0xbaadf00d/play-redis-module.gitt</connection>
+        <connection>scm:git:https://github.com/0xbaadf00d/play-redis-module.git</connection>
         <developerConnection>scm:git:https://github.com/0xbaadf00d/play-redis-module.git</developerConnection>
         <url>https://github.com/0xbaadf00d/play-redis-module.git</url>
     </scm>
