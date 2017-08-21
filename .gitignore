@@ -7,6 +7,12 @@
 *.iml
 
 
+# Other IDE
+.classpath
+.settings
+.project
+
+
 # Package Files #
 *.jar
 target/
