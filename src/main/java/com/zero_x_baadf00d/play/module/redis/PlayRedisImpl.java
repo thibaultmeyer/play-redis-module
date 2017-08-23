@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import play.Logger;
 import play.inject.ApplicationLifecycle;
 import play.libs.Json;
@@ -51,7 +52,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.20
+ * @version 17.08.23
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -106,18 +107,76 @@ public class PlayRedisImpl implements PlayRedis {
     private static final String REDISPOOL_SERVER_CONN_MINIDLE = "redis.default.conn.minidle";
 
     /**
-     * The Redis connections pool.
-     *
-     * @since 16.03.09
-     */
-    private final JedisPool redisPool;
-
-    /**
      * The database number to use by default.
      *
      * @since 16.03.09
      */
     private final Integer redisDefaultDb;
+
+    /**
+     * Redis server address (eg: 127.0.0.1).
+     *
+     * @since 17.08.23
+     */
+    private final String redisHost;
+
+    /**
+     * Redis server port (eg: 6379).
+     *
+     * @since 17.08.23
+     */
+    private final Integer redisPort;
+
+    /**
+     * Connection timeout.
+     *
+     * @since 17.08.23
+     */
+    private final Integer redisConnTimeout;
+
+    /**
+     * Maximum number of opened connections
+     * at the same time.
+     *
+     * @since 17.08.23
+     */
+    private final Integer redisConnTotal;
+
+    /**
+     * Maximum number of connections keep opened.
+     *
+     * @since 17.08.23
+     */
+    private final Integer redisConnMaxIdle;
+
+    /**
+     * Minimum number of connections keep opened.
+     *
+     * @since 17.08.23
+     */
+    private final Integer redisConnMinIdle;
+
+    /**
+     * Redis server authentication password.
+     *
+     * @since 17.08.23
+     */
+    private final String redisPassword;
+
+    /**
+     * The Redis connections pool.
+     *
+     * @since 16.03.09
+     */
+    private JedisPool redisPool;
+
+    /**
+     * Timestamp (in milliseconds) when the connections pool when the
+     * method {@link #initializeConnectionsPool()} has been called.
+     *
+     * @since 17.08.23
+     */
+    private long lastPoolInitialization;
 
     /**
      * Build a basic instance with injected dependency.
@@ -128,35 +187,145 @@ public class PlayRedisImpl implements PlayRedis {
      */
     @Inject
     public PlayRedisImpl(final ApplicationLifecycle lifecycle, final Config configuration) {
-        final String redisHost = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_HOST);
-        final String redisPassword;
+        // Read configuration
+        this.redisHost = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_HOST).trim();
+        this.redisPort = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_PORT);
         if (configuration.hasPath(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD)) {
-            redisPassword = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD);
+            this.redisPassword = configuration.getString(PlayRedisImpl.REDISPOOL_SERVER_PASSWORD);
         } else {
-            redisPassword = null;
+            this.redisPassword = null;
         }
-        final Integer redisPort = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_PORT);
-        final Integer redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT);
-        final Integer redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL);
-        final Integer redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE);
-        final Integer redisConnMinIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE);
         this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT);
-        if (redisHost != null) {
-            final JedisPoolConfig poolConfig = new JedisPoolConfig();
-            poolConfig.setMinIdle(redisConnMinIdle > 0 ? redisConnMinIdle : 1);
-            poolConfig.setMaxIdle(redisConnMaxIdle > 0 ? redisConnMaxIdle : 1);
-            poolConfig.setMaxTotal(redisConnTotal > 0 ? redisConnTotal : 1);
-            if (redisPassword != null && !redisPassword.isEmpty()) {
-                this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout, redisPassword);
-            } else {
-                this.redisPool = new JedisPool(poolConfig, redisHost, redisPort, redisConnTimeout);
-            }
-            PlayRedisImpl.LOG.info("Redis connected at {}", String.format("redis://%s:%d", redisHost, redisPort));
-        } else {
-            throw new RuntimeException("Redis module is not properly configured");
+        this.redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT);
+        this.redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL);
+        this.redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE);
+        this.redisConnMinIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE);
+
+        // Check configuration
+        if (this.redisHost.isEmpty()) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_HOST,
+                "Cannot be empty"
+            );
         }
+        if (this.redisPort < 1 || this.redisPort > 65535) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_PORT,
+                "Must be between 1 and 65535"
+            );
+        }
+        if (this.redisDefaultDb < 0) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT,
+                "Must be greater than 0"
+            );
+        }
+        if (this.redisConnTimeout < 0) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT,
+                "Must be equal or greater than 0"
+            );
+        }
+        if (this.redisConnTotal < 1) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL,
+                "Must be equal or greater than 1"
+            );
+        }
+        if (this.redisConnMinIdle > this.redisConnTotal) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE,
+                "Cannot be greater than " + this.redisConnTotal
+            );
+        }
+        if (this.redisConnMinIdle < 0) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_MINIDLE,
+                "Must be equal or greater than 0"
+            );
+        }
+        if (this.redisConnMaxIdle < this.redisConnMinIdle) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE,
+                "Must be equal or greater than " + this.redisConnMinIdle
+            );
+        }
+        if (this.redisConnMaxIdle > this.redisConnTotal) {
+            throw new ConfigException.BadValue(
+                configuration.origin(),
+                PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE,
+                "Cannot be greater than " + this.redisConnTotal
+            );
+        }
+
+        // Initialize the connections pool
+        this.initializeConnectionsPool();
+
+        // Add stop hook
         if (lifecycle != null) {
             lifecycle.addStopHook(this::stopHook);
+        }
+    }
+
+    /**
+     * Check if the method {@link #initializeConnectionsPool()}
+     * can be called.
+     *
+     * @return {@code true} if can be called
+     * @since 17.08.23
+     */
+    private boolean canResetConnectionsPool() {
+        final long ts = System.currentTimeMillis();
+        if (lastPoolInitialization == 0 || lastPoolInitialization + 5000 > ts) {
+            lastPoolInitialization = ts;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Initialize the connections pool. If the pool is already
+     * initialized, it will be closed and initialized again.
+     *
+     * @since 17.08.23
+     */
+    private synchronized void initializeConnectionsPool() {
+        if (this.canResetConnectionsPool()) {
+            if (this.redisPool != null && !this.redisPool.isClosed()) {
+                this.redisPool.close();
+            }
+            final JedisPoolConfig poolConfig = new JedisPoolConfig();
+            poolConfig.setMinIdle(this.redisConnMinIdle);
+            poolConfig.setMaxIdle(this.redisConnMaxIdle);
+            poolConfig.setMaxTotal(this.redisConnTotal);
+            if (this.redisPassword != null && !this.redisPassword.isEmpty()) {
+                this.redisPool = new JedisPool(
+                    poolConfig,
+                    this.redisHost,
+                    this.redisPort,
+                    this.redisConnTimeout,
+                    this.redisPassword
+                );
+            } else {
+                this.redisPool = new JedisPool(
+                    poolConfig,
+                    this.redisHost,
+                    this.redisPort,
+                    this.redisConnTimeout
+                );
+            }
+            PlayRedisImpl.LOG.info(
+                "Redis connected at {}",
+                String.format("redis://%s:%d", this.redisHost, this.redisPort)
+            );
         }
     }
 
@@ -174,7 +343,7 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public Jedis getConnection() {
-        if (this.redisDefaultDb == null) {
+        if (this.redisDefaultDb == 0) {
             return this.redisPool.getResource();
         }
         final Jedis conn = this.redisPool.getResource();
@@ -185,7 +354,7 @@ public class PlayRedisImpl implements PlayRedis {
     @Override
     public Jedis getConnection(final int db) {
         final Jedis conn = this.redisPool.getResource();
-        conn.select(db >= 0 ? db : 0);
+        conn.select(db >= 0 ? db : this.redisDefaultDb);
         return conn;
     }
 
@@ -217,10 +386,7 @@ public class PlayRedisImpl implements PlayRedis {
         T object = null;
         try {
             final String rawData;
-            try (final Jedis jedis = this.redisPool.getResource()) {
-                if (this.redisDefaultDb != null) {
-                    jedis.select(this.redisDefaultDb);
-                }
+            try (final Jedis jedis = this.getConnection()) {
                 rawData = jedis.get(key);
             }
             if (rawData != null) {
@@ -273,10 +439,7 @@ public class PlayRedisImpl implements PlayRedis {
     private void set(final String key, final ObjectWriter writer, final Object value, final int expiration) {
         try {
             final String data = writer.writeValueAsString(value);
-            try (final Jedis jedis = this.redisPool.getResource()) {
-                if (this.redisDefaultDb != null) {
-                    jedis.select(this.redisDefaultDb);
-                }
+            try (final Jedis jedis = this.getConnection()) {
                 jedis.set(key, data);
                 if (expiration > 0) {
                     jedis.expire(key, expiration);
@@ -347,20 +510,14 @@ public class PlayRedisImpl implements PlayRedis {
 
     @Override
     public void remove(final String key) {
-        try (final Jedis jedis = this.redisPool.getResource()) {
-            if (this.redisDefaultDb != null) {
-                jedis.select(this.redisDefaultDb);
-            }
+        try (final Jedis jedis = this.getConnection()) {
             jedis.del(key);
         }
     }
 
     @Override
     public void remove(final String... keys) {
-        try (final Jedis jedis = this.redisPool.getResource()) {
-            if (this.redisDefaultDb != null) {
-                jedis.select(this.redisDefaultDb);
-            }
+        try (final Jedis jedis = this.getConnection()) {
             for (final String k : keys) {
                 jedis.del(k);
             }
@@ -370,10 +527,7 @@ public class PlayRedisImpl implements PlayRedis {
     @Override
     public boolean exists(final String key) {
         final boolean exists;
-        try (final Jedis jedis = this.redisPool.getResource()) {
-            if (this.redisDefaultDb != null) {
-                jedis.select(this.redisDefaultDb);
-            }
+        try (final Jedis jedis = this.getConnection()) {
             exists = jedis.exists(key);
         }
         return exists;
@@ -423,10 +577,7 @@ public class PlayRedisImpl implements PlayRedis {
     private void addInList(final String key, final ObjectWriter writer, final Object value) {
         try {
             final String data = writer.writeValueAsString(value);
-            try (final Jedis jedis = this.redisPool.getResource()) {
-                if (this.redisDefaultDb != null) {
-                    jedis.select(this.redisDefaultDb);
-                }
+            try (final Jedis jedis = this.getConnection()) {
                 jedis.lpush(key, data);
             }
         } catch (final IOException ex) {
@@ -446,10 +597,7 @@ public class PlayRedisImpl implements PlayRedis {
     private void addInList(final String key, final ObjectWriter writer, final Object value, final int maxItem) {
         try {
             final String data = writer.writeValueAsString(value);
-            try (final Jedis jedis = this.redisPool.getResource()) {
-                if (this.redisDefaultDb != null) {
-                    jedis.select(this.redisDefaultDb);
-                }
+            try (final Jedis jedis = this.getConnection()) {
                 jedis.lpush(key, data);
                 jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
@@ -504,10 +652,7 @@ public class PlayRedisImpl implements PlayRedis {
         final List<T> objects = new ArrayList<>();
         try {
             final List<String> rawData;
-            try (final Jedis jedis = this.redisPool.getResource()) {
-                if (this.redisDefaultDb != null) {
-                    jedis.select(this.redisDefaultDb);
-                }
+            try (final Jedis jedis = this.getConnection()) {
                 rawData = jedis.lrange(key, offset, count > 0 ? count - 1 : count);
             }
             if (rawData != null) {
@@ -524,10 +669,7 @@ public class PlayRedisImpl implements PlayRedis {
     @Override
     public boolean tryLock(final String key, final int expiration) {
         long ret = 0;
-        try (final Jedis jedis = this.redisPool.getResource()) {
-            if (this.redisDefaultDb != null) {
-                jedis.select(this.redisDefaultDb);
-            }
+        try (final Jedis jedis = this.getConnection()) {
             ret = jedis.setnx(key, "1");
             if (ret == 1) {
                 jedis.expire(key, expiration);
@@ -548,10 +690,7 @@ public class PlayRedisImpl implements PlayRedis {
     @Override
     public Long increment(final String key, final int expiration) {
         final Long value;
-        try (final Jedis jedis = this.redisPool.getResource()) {
-            if (this.redisDefaultDb != null) {
-                jedis.select(this.redisDefaultDb);
-            }
+        try (final Jedis jedis = this.getConnection()) {
             value = jedis.incr(key);
             if (expiration > 0 && value == 1) {
                 jedis.expire(key, expiration);

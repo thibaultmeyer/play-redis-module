@@ -31,7 +31,7 @@ Redis module for Play Framework 2
           default = 0
         }
         conn {
-          timeout = 0
+          timeout = 2000
           maxtotal = 256
           maxidle  = 32
           minidle  = 8

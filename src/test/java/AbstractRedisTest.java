@@ -33,6 +33,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static org.mockito.Mockito.mock;
@@ -41,10 +42,24 @@ import static org.mockito.Mockito.mock;
  * All unit test classes must extend this class.
  *
  * @author Thibault Meyer
- * @version 17.06.26
+ * @version 17.08.23
  * @since 17.03.26
  */
 public class AbstractRedisTest {
+
+    /**
+     * The Redis listen port to use.
+     *
+     * @since 17.03.26
+     */
+    private final Integer redisPort;
+
+    /**
+     * Extra Play configuration.
+     *
+     * @since 17.08.23
+     */
+    private final Map<String, Object> extraConfig;
 
     /**
      * Handle to the Redis module.
@@ -61,13 +76,6 @@ public class AbstractRedisTest {
     protected Application application;
 
     /**
-     * The Redis listen port to use.
-     *
-     * @since 17.03.26
-     */
-    private Integer redisPort;
-
-    /**
      * Default constructor.
      *
      * @param redisPort The redis port number to use
@@ -75,6 +83,19 @@ public class AbstractRedisTest {
      */
     AbstractRedisTest(final Integer redisPort) {
         this.redisPort = redisPort;
+        this.extraConfig = null;
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param redisPort   The redis port number to use
+     * @param extraConfig Extra configuration
+     * @since 17.03.26
+     */
+    AbstractRedisTest(final Integer redisPort, final Map<String, Object> extraConfig) {
+        this.redisPort = redisPort;
+        this.extraConfig = extraConfig;
     }
 
     /**
@@ -93,18 +114,15 @@ public class AbstractRedisTest {
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
                         )
                     );
-                    put("redis.default.db.default", 0);
+                    put("redis.default.db.default", 1);
                     put("redis.default.host", "127.0.0.1");
                     put("redis.default.port", redisPort);
+                    if (extraConfig != null) {
+                        for (final Map.Entry<String, Object> e : extraConfig.entrySet()) {
+                            put(e.getKey(), e.getValue());
+                        }
+                    }
                 }});
-            Assert.assertEquals(
-                0,
-                this.application.config().getLong("redis.default.db.default")
-            );
-            Assert.assertEquals(
-                "127.0.0.1",
-                this.application.config().getString("redis.default.host")
-            );
             Assert.assertEquals(
                 redisPort.longValue(),
                 this.application.config().getLong("redis.default.port")

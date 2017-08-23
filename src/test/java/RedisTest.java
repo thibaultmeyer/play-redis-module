@@ -43,7 +43,7 @@ import static org.mockito.Mockito.mock;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.20
+ * @version 17.08.23
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -191,8 +191,11 @@ public class RedisTest extends AbstractRedisTest {
                 conn.get("junit.item")
             );
         }
-        try (final Jedis conn = this.playRedis.getConnection(1)) {
+        try (final Jedis conn = this.playRedis.getConnection(0)) {
             Assert.assertFalse(conn.exists("junit.item"));
+        }
+        try (final Jedis conn = this.playRedis.getConnection(-1)) {
+            Assert.assertTrue(conn.exists("junit.item"));
         }
     }
 
