@@ -40,7 +40,7 @@ import static org.mockito.Mockito.mock;
  * RedisConnFailTest.
  *
  * @author Thibault Meyer
- * @version 17.06.26
+ * @version 17.08.24
  * @since 17.06.26
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -80,14 +80,6 @@ public class RedisConnFailTest {
                     put("redis.default.port", 6379);
                     put("redis.default.password", "false-password");
                 }});
-            Assert.assertEquals(
-                0,
-                this.application.config().getLong("redis.default.db.default")
-            );
-            Assert.assertEquals(
-                "127.0.0.1",
-                this.application.config().getString("redis.default.host")
-            );
             Assert.assertEquals(
                 "false-password",
                 this.application.config().getString("redis.default.password")

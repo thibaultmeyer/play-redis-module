@@ -52,7 +52,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.23
+ * @version 17.08.24
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -84,7 +84,12 @@ public class PlayRedisImpl implements PlayRedis {
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_DB_DEFAULT = "redis.default.db.default";
+    private static final String REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED = "redis.default.db.default";
+
+    /**
+     * @since 17.08.24
+     */
+    private static final String REDISPOOL_SERVER_DB_DEFAULT = "redis.default.defaultdb";
 
     /**
      * @since 16.03.09
@@ -195,7 +200,16 @@ public class PlayRedisImpl implements PlayRedis {
         } else {
             this.redisPassword = null;
         }
-        this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT);
+        if (configuration.hasPath(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED)) {
+            LOG.warn(
+                "The setting key '{}' is deprecated, please change it for '{}'",
+                PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED,
+                PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT
+            );
+            this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED);
+        } else {
+            this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT);
+        }
         this.redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT);
         this.redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL);
         this.redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE);
@@ -500,10 +514,10 @@ public class PlayRedisImpl implements PlayRedis {
         if (data == null) {
             try {
                 data = block.call();
-                this.set(key, writer, data, expiration);
             } catch (final Exception ex) {
-                PlayRedisImpl.LOG.error("Something goes wrong during the Callable execution", ex);
+                throw new RuntimeException(ex);
             }
+            this.set(key, writer, data, expiration);
         }
         return data;
     }
@@ -581,7 +595,7 @@ public class PlayRedisImpl implements PlayRedis {
                 jedis.lpush(key, data);
             }
         } catch (final IOException ex) {
-            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Can't add object in list", ex);
         }
     }
 
@@ -602,7 +616,7 @@ public class PlayRedisImpl implements PlayRedis {
                 jedis.ltrim(key, 0, maxItem > 0 ? maxItem - 1 : maxItem);
             }
         } catch (final IOException ex) {
-            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Can't add object in list", ex);
         }
     }
 
@@ -661,7 +675,7 @@ public class PlayRedisImpl implements PlayRedis {
                 }
             }
         } catch (IOException | NullPointerException ex) {
-            PlayRedisImpl.LOG.error("Something goes wrong with Redis module", ex);
+            PlayRedisImpl.LOG.error("Can't get object from list", ex);
         }
         return objects;
     }

@@ -34,7 +34,7 @@ import java.util.HashMap;
  * RedisInitFailureTest.
  *
  * @author Thibault Meyer
- * @version 17.08.23
+ * @version 17.08.24
  * @since 17.08.23
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -172,6 +172,21 @@ public class RedisInitFailureTest {
      */
     @Test
     public void redisInitFailureTest_009_defaultdb_cant_lt_zero() {
+        try {
+            new AbstractRedisTest(6379, new HashMap<String, Object>() {{
+                put("redis.default.defaultdb", -1);
+            }}) {{
+            }}.initializeRedisModule();
+            Assert.fail();
+        } catch (final ConfigException ignore) {
+        }
+    }
+
+    /**
+     * @since 17.08.23
+     */
+    @Test
+    public void redisInitFailureTest_010_deprecated_warning() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
                 put("redis.default.db.default", -1);

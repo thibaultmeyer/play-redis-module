@@ -43,7 +43,7 @@ import static org.mockito.Mockito.mock;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.23
+ * @version 17.08.24
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -234,6 +234,16 @@ public class RedisTest extends AbstractRedisTest {
         final Long l = this.playRedis.getOrElse("junit.item", new TypeReference<Long>() {
         }, () -> 42L);
         Assert.assertEquals(42, l.longValue());
+
+        try {
+            this.playRedis.getOrElse("junit.item18", new TypeReference<Long>() {
+            }, () -> {
+                final Object o = "cast-error";
+                return (Long) o;
+            });
+            Assert.fail();
+        } catch (final Exception ignore) {
+        }
     }
 
     /**

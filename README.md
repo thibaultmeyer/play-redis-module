@@ -20,22 +20,29 @@ Redis module for Play Framework 2
 
 #### application.conf
 
-    # Play Redis Module
+    ## Play Redis Module
+    # https://github.com/0xbaadf00d/play-redis-module
     # ~~~~~
     redis {
-      default {
-        host = "127.0.0.1"
-        port = 6379
-        password = "your-password"  # Optional
-        db {
-          default = 0
-        }
-        conn {
+
+      # Redis host. Must be an IP address or a valid hostname
+      host = "127.0.0.1"
+
+      # Defines the port on which the server is listening. By
+      # default, Redis server listen on 6379
+      port = 6379
+
+      # Defines the database to use by default. Must be a valid
+      # number. Check your Redis configuration to know the hightest
+      # value you are able to use
+      defaultdb = 0
+
+      # Pool connections tuning
+      conn {
           timeout = 2000
-          maxtotal = 256
-          maxidle  = 32
-          minidle  = 8
-        }
+          maxtotal = 64
+          maxidle = 16
+          minidle = 8
       }
     }
 

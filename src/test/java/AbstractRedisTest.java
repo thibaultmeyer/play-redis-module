@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mock;
  * All unit test classes must extend this class.
  *
  * @author Thibault Meyer
- * @version 17.08.23
+ * @version 17.08.24
  * @since 17.03.26
  */
 public class AbstractRedisTest {
@@ -114,7 +114,7 @@ public class AbstractRedisTest {
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
                         )
                     );
-                    put("redis.default.db.default", 1);
+                    put("redis.default.defaultdb", 1);
                     put("redis.default.host", "127.0.0.1");
                     put("redis.default.port", redisPort);
                     if (extraConfig != null) {
