@@ -11,6 +11,7 @@
 .classpath
 .settings
 .project
+.vscode
 
 
 # Package Files #
