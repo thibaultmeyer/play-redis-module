@@ -52,7 +52,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.24
+ * @version 17.08.30
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -65,6 +65,11 @@ public class PlayRedisImpl implements PlayRedis {
      * @since 16.05.07
      */
     private static final Logger.ALogger LOG = Logger.of(PlayRedis.class);
+
+    /**
+     * @since 16.08.30
+     */
+    private static final Integer REDISPOOL_RESET_COOLDOWN = 5000;
 
     /**
      * @since 16.03.09
@@ -177,7 +182,7 @@ public class PlayRedisImpl implements PlayRedis {
 
     /**
      * Timestamp (in milliseconds) when the connections pool when the
-     * method {@link #initializeConnectionsPool()} has been called.
+     * method {@link #resetConnectionsPool()} has been called.
      *
      * @since 17.08.23
      */
@@ -281,7 +286,7 @@ public class PlayRedisImpl implements PlayRedis {
         }
 
         // Initialize the connections pool
-        this.initializeConnectionsPool();
+        this.resetConnectionsPool();
 
         // Add stop hook
         if (lifecycle != null) {
@@ -290,7 +295,7 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     /**
-     * Check if the method {@link #initializeConnectionsPool()}
+     * Check if the method {@link #resetConnectionsPool()}
      * can be called.
      *
      * @return {@code true} if can be called
@@ -298,7 +303,7 @@ public class PlayRedisImpl implements PlayRedis {
      */
     private boolean canResetConnectionsPool() {
         final long ts = System.currentTimeMillis();
-        if (lastPoolInitialization == 0 || lastPoolInitialization + 5000 > ts) {
+        if (lastPoolInitialization == 0 || lastPoolInitialization + PlayRedisImpl.REDISPOOL_RESET_COOLDOWN > ts) {
             lastPoolInitialization = ts;
             return true;
         }
@@ -309,37 +314,40 @@ public class PlayRedisImpl implements PlayRedis {
      * Initialize the connections pool. If the pool is already
      * initialized, it will be closed and initialized again.
      *
-     * @since 17.08.23
+     * @since 17.08.30
      */
-    private synchronized void initializeConnectionsPool() {
-        if (this.canResetConnectionsPool()) {
-            if (this.redisPool != null && !this.redisPool.isClosed()) {
-                this.redisPool.close();
-            }
-            final JedisPoolConfig poolConfig = new JedisPoolConfig();
-            poolConfig.setMinIdle(this.redisConnMinIdle);
-            poolConfig.setMaxIdle(this.redisConnMaxIdle);
-            poolConfig.setMaxTotal(this.redisConnTotal);
-            if (this.redisPassword != null && !this.redisPassword.isEmpty()) {
-                this.redisPool = new JedisPool(
-                    poolConfig,
-                    this.redisHost,
-                    this.redisPort,
-                    this.redisConnTimeout,
-                    this.redisPassword
+    @Override
+    public void resetConnectionsPool() {
+        synchronized (PlayRedisImpl.class) {
+            if (this.canResetConnectionsPool()) {
+                if (this.redisPool != null && !this.redisPool.isClosed()) {
+                    this.redisPool.close();
+                }
+                final JedisPoolConfig poolConfig = new JedisPoolConfig();
+                poolConfig.setMinIdle(this.redisConnMinIdle);
+                poolConfig.setMaxIdle(this.redisConnMaxIdle);
+                poolConfig.setMaxTotal(this.redisConnTotal);
+                if (this.redisPassword != null && !this.redisPassword.isEmpty()) {
+                    this.redisPool = new JedisPool(
+                        poolConfig,
+                        this.redisHost,
+                        this.redisPort,
+                        this.redisConnTimeout,
+                        this.redisPassword
+                    );
+                } else {
+                    this.redisPool = new JedisPool(
+                        poolConfig,
+                        this.redisHost,
+                        this.redisPort,
+                        this.redisConnTimeout
+                    );
+                }
+                PlayRedisImpl.LOG.info(
+                    "Redis connected at {}",
+                    String.format("redis://%s:%d", this.redisHost, this.redisPort)
                 );
-            } else {
-                this.redisPool = new JedisPool(
-                    poolConfig,
-                    this.redisHost,
-                    this.redisPort,
-                    this.redisConnTimeout
-                );
             }
-            PlayRedisImpl.LOG.info(
-                "Redis connected at {}",
-                String.format("redis://%s:%d", this.redisHost, this.redisPort)
-            );
         }
     }
 
