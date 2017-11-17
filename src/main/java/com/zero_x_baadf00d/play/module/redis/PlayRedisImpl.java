@@ -51,7 +51,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.03.26
+ * @version 17.08.20
  * @see PlayRedis
  * @since 16.03.09
  */
