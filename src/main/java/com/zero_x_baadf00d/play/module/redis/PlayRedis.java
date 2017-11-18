@@ -42,6 +42,15 @@ import java.util.concurrent.Callable;
 public interface PlayRedis {
 
     /**
+     * Reset the connections pool. If the pool is already
+     * initialized, it will be closed and initialized again.
+     * A cooldown has been added to avoid pool reset flooding.
+     *
+     * @since 17.08.30
+     */
+    void resetConnectionsPool();
+
+    /**
      * Get a Redis connection from the pool.
      *
      * @return A Redis connection

@@ -1,7 +1,7 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-17.08-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-17.11-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/0xbaadf00d/play-redis-module.svg)](https://jitpack.io/#0xbaadf00d/play-redis-module)
 [![Build](https://img.shields.io/travis-ci/0xbaadf00d/play-redis-module.svg?branch=master&style=flat)](https://travis-ci.org/0xbaadf00d/play-redis-module)
 [![codecov](https://codecov.io/gh/0xbaadf00d/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/0xbaadf00d/play-redis-module)
@@ -17,6 +17,7 @@ Redis module for Play Framework 2
      resolvers += "jitpack" at "https://jitpack.io"
 
      libraryDependencies += "com.github.0xbaadf00d" % "play-redis-module" % "release~YY.MM"
+
 
 #### application.conf
 
