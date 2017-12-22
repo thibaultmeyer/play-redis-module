@@ -114,9 +114,9 @@ public class AbstractRedisTest {
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
                         )
                     );
-                    put("redis.default.defaultdb", 1);
-                    put("redis.default.host", "127.0.0.1");
-                    put("redis.default.port", redisPort);
+                    put("redis.defaultdb", 1);
+                    put("redis.host", "127.0.0.1");
+                    put("redis.port", redisPort);
                     if (extraConfig != null) {
                         for (final Map.Entry<String, Object> e : extraConfig.entrySet()) {
                             put(e.getKey(), e.getValue());
@@ -125,7 +125,7 @@ public class AbstractRedisTest {
                 }});
             Assert.assertEquals(
                 redisPort.longValue(),
-                this.application.config().getLong("redis.default.port")
+                this.application.config().getLong("redis.port")
             );
             this.playRedis = new PlayRedisImpl(
                 mock(ApplicationLifecycle.class),

@@ -52,7 +52,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.30
+ * @version 17.12.21
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -67,54 +67,54 @@ public class PlayRedisImpl implements PlayRedis {
     private static final Logger.ALogger LOG = Logger.of(PlayRedis.class);
 
     /**
-     * @since 16.08.30
+     * @since 16.03.09
      */
-    private static final Integer REDISPOOL_RESET_COOLDOWN = 5000;
+    private static final String REDISPOOL_SERVER_HOST = "redis.host";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_HOST = "redis.default.host";
+    private static final String REDISPOOL_SERVER_PORT = "redis.port";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_PORT = "redis.default.port";
+    private static final String REDISPOOL_SERVER_PASSWORD = "redis.password";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_PASSWORD = "redis.default.password";
-
-    /**
-     * @since 16.03.09
-     */
-    private static final String REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED = "redis.default.db.default";
+    private static final String REDISPOOL_SERVER_DB_DEFAULT_DEPRECATED = "redis.db";
 
     /**
      * @since 17.08.24
      */
-    private static final String REDISPOOL_SERVER_DB_DEFAULT = "redis.default.defaultdb";
+    private static final String REDISPOOL_SERVER_DB_DEFAULT = "redis.defaultdb";
+
+    /**
+     * @since 17.12.21
+     */
+    private static final String REDISPOOL_SERVER_REINIT_POOL_COOLDOWN = "redis.reinit-pool-cooldown";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_CONN_TIMEOUT = "redis.default.conn.timeout";
+    private static final String REDISPOOL_SERVER_CONN_TIMEOUT = "redis.conn.timeout";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_CONN_TOTAL = "redis.default.conn.maxtotal";
+    private static final String REDISPOOL_SERVER_CONN_TOTAL = "redis.conn.maxtotal";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_CONN_MAXIDLE = "redis.default.conn.maxidle";
+    private static final String REDISPOOL_SERVER_CONN_MAXIDLE = "redis.conn.maxidle";
 
     /**
      * @since 16.03.09
      */
-    private static final String REDISPOOL_SERVER_CONN_MINIDLE = "redis.default.conn.minidle";
+    private static final String REDISPOOL_SERVER_CONN_MINIDLE = "redis.conn.minidle";
 
     /**
      * The database number to use by default.
@@ -136,6 +136,13 @@ public class PlayRedisImpl implements PlayRedis {
      * @since 17.08.23
      */
     private final Integer redisPort;
+
+    /**
+     * Connection pool retry cooldown.
+     *
+     * @since 17.12.21
+     */
+    private final long redisReinitPoolCooldown;
 
     /**
      * Connection timeout.
@@ -215,6 +222,7 @@ public class PlayRedisImpl implements PlayRedis {
         } else {
             this.redisDefaultDb = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_DB_DEFAULT);
         }
+        this.redisReinitPoolCooldown = configuration.getLong(PlayRedisImpl.REDISPOOL_SERVER_REINIT_POOL_COOLDOWN);
         this.redisConnTimeout = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TIMEOUT);
         this.redisConnTotal = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_TOTAL);
         this.redisConnMaxIdle = configuration.getInt(PlayRedisImpl.REDISPOOL_SERVER_CONN_MAXIDLE);
@@ -303,8 +311,8 @@ public class PlayRedisImpl implements PlayRedis {
      */
     private boolean canResetConnectionsPool() {
         final long ts = System.currentTimeMillis();
-        if (lastPoolInitialization == 0 || lastPoolInitialization + PlayRedisImpl.REDISPOOL_RESET_COOLDOWN > ts) {
-            lastPoolInitialization = ts;
+        if (this.lastPoolInitialization == 0 || this.lastPoolInitialization + this.redisReinitPoolCooldown > ts) {
+            this.lastPoolInitialization = ts;
             return true;
         }
         return false;

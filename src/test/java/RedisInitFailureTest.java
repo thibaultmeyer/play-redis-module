@@ -47,7 +47,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_001_host_not_empty() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.host", " ");
+                put("redis.host", " ");
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -81,7 +81,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_003_timeout_only_positive() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.timeout", -1);
+                put("redis.conn.timeout", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -96,7 +96,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_004_total_conn() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.maxtotal", -1);
+                put("redis.conn.maxtotal", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -111,8 +111,8 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_005_minidle_cant_gt_totalconn() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.maxtotal", 10);
-                put("redis.default.conn.minidle", 12);
+                put("redis.conn.maxtotal", 10);
+                put("redis.conn.minidle", 12);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -127,7 +127,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_006_minidle_gte_zero() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.minidle", -1);
+                put("redis.conn.minidle", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -142,8 +142,8 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_007_maxidle_cant_lt_minidle() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.minidle", 2);
-                put("redis.default.conn.maxidle", 1);
+                put("redis.conn.minidle", 2);
+                put("redis.conn.maxidle", 1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -158,8 +158,8 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_008_maxidle_cant_gt_totalconn() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.conn.maxtotal", 10);
-                put("redis.default.conn.maxidle", 12);
+                put("redis.conn.maxtotal", 10);
+                put("redis.conn.maxidle", 12);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -174,7 +174,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_009_defaultdb_cant_lt_zero() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.defaultdb", -1);
+                put("redis.db", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
@@ -189,7 +189,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_010_deprecated_warning() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.default.db.default", -1);
+                put("redis.defaultdb", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();
