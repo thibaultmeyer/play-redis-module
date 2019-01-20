@@ -6,7 +6,7 @@
 
     <groupId>com.zero_x_baadf00d</groupId>
     <artifactId>play-redis-module</artifactId>
-    <version>18.12u1</version>
+    <version>19.01</version>
     <name>Play Redis module</name>
     <description>Redis module for Play Framework 2</description>
     <url>https://github.com/0xbaadf00d/play-redis-module</url>
