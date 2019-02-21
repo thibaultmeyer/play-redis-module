@@ -1,11 +1,11 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-19.01-orange.svg)](https://github.com/0xbaadf00d/play-redis-module/releases)
-[![JitPack](https://jitpack.io/v/0xbaadf00d/play-redis-module.svg)](https://jitpack.io/#0xbaadf00d/play-redis-module)
-[![Build](https://img.shields.io/travis-ci/0xbaadf00d/play-redis-module.svg?branch=master&style=flat)](https://travis-ci.org/0xbaadf00d/play-redis-module)
-[![codecov](https://codecov.io/gh/0xbaadf00d/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/0xbaadf00d/play-redis-module)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/0xbaadf00d/play-redis-module/master/LICENSE)
+[![Latest release](https://img.shields.io/badge/latest_release-19.01-orange.svg)](https://github.com/thibaultmeyer/play-redis-module/releases)
+[![JitPack](https://jitpack.io/v/thibaultmeyer/play-redis-module.svg)](https://jitpack.io/#thibaultmeyer/play-redis-module)
+[![Build](https://api.travis-ci.org/thibaultmeyer/play-redis-module.svg)](https://travis-ci.org/thibaultmeyer/play-redis-module)
+[![codecov](https://codecov.io/gh/thibaultmeyer/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/thibaultmeyer/play-redis-module)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/thibaultmeyer/play-redis-module/master/LICENSE)
 
 Redis module for Play Framework 2
 *****
@@ -16,13 +16,13 @@ Redis module for Play Framework 2
 
      resolvers += "jitpack" at "https://jitpack.io"
 
-     libraryDependencies += "com.github.0xbaadf00d" % "play-redis-module" % "release~YY.MM"
+     libraryDependencies += "com.github.thibaultmeyer" % "play-redis-module" % "release~YY.MM"
 
 
 #### application.conf
 
     ## Play Redis Module
-    # https://github.com/0xbaadf00d/play-redis-module
+    # https://github.com/thibaultmeyer/play-redis-module
     # ~~~~~
     redis {
 
@@ -110,4 +110,4 @@ Redis module for Play Framework 2
 
 
 ## License
-This project is released under terms of the [MIT license](https://raw.githubusercontent.com/0xbaadf00d/play-redis-module/master/LICENSE).
+This project is released under terms of the [MIT license](https://raw.githubusercontent.com/thibaultmeyer/play-redis-module/master/LICENSE).
