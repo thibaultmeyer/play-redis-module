@@ -6,26 +6,26 @@
 
     <groupId>com.zero_x_baadf00d</groupId>
     <artifactId>play-redis-module</artifactId>
-    <version>17.11</version>
+    <version>20.06</version>
     <name>Play Redis module</name>
     <description>Redis module for Play Framework 2</description>
-    <url>https://github.com/0xbaadf00d/play-redis-module</url>
+    <url>https://github.com/thibaultmeyer/play-redis-module</url>
 
     <scm>
-        <connection>scm:git:https://github.com/0xbaadf00d/play-redis-module.git</connection>
-        <developerConnection>scm:git:https://github.com/0xbaadf00d/play-redis-module.git</developerConnection>
-        <url>https://github.com/0xbaadf00d/play-redis-module.git</url>
+        <connection>scm:git:https://github.com/thibaultmeyer/play-redis-module.git</connection>
+        <developerConnection>scm:git:https://github.com/thibaultmeyer/play-redis-module.git</developerConnection>
+        <url>https://github.com/thibaultmeyer/play-redis-module.git</url>
     </scm>
 
     <issueManagement>
-        <url>https://github.com/0xbaadf00d/play-redis-module/issues</url>
+        <url>https://github.com/thibaultmeyer/play-redis-module/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
     <licenses>
         <license>
             <name>The MIT License (MIT)</name>
-            <url>https://raw.githubusercontent.com/0xbaadf00d/play-redis-module/master/LICENSE</url>
+            <url>https://raw.githubusercontent.com/thibaultmeyer/play-redis-module/master/LICENSE</url>
         </license>
     </licenses>
 
@@ -39,7 +39,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -49,7 +49,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
+                <version>3.2.0</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                     <show>package</show>
@@ -67,30 +67,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.2.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
                         <goals>
                             <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Sign with GPG -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.6</version>
-                <configuration>
-                    <keyname>0xBAADF00D</keyname>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -123,7 +105,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.7.201606060606</version>
+                <version>0.8.5</version>
                 <executions>
                     <execution>
                         <goals>
@@ -158,24 +140,24 @@
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
-            <version>2.9.0</version>
+            <version>3.3.0</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe.play</groupId>
             <artifactId>play_2.12</artifactId>
-            <version>2.6.7</version>
+            <version>2.8.2</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.8.47</version>
+            <version>3.3.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -187,7 +169,7 @@
         <dependency>
             <groupId>com.typesafe.play</groupId>
             <artifactId>play-test_2.12</artifactId>
-            <version>2.6.7</version>
+            <version>2.8.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

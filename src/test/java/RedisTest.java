@@ -43,7 +43,7 @@ import static org.mockito.Mockito.mock;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.08.20
+ * @version 17.11.18
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -67,7 +67,7 @@ public class RedisTest extends AbstractRedisTest {
         Assert.assertEquals(1,
             module.bindings(
                 mock(Environment.class),
-                this.application.configuration().getWrappedConfiguration()
+                this.application.asScala().configuration()
             ).length()
         );
     }
@@ -191,8 +191,11 @@ public class RedisTest extends AbstractRedisTest {
                 conn.get("junit.item")
             );
         }
-        try (final Jedis conn = this.playRedis.getConnection(1)) {
+        try (final Jedis conn = this.playRedis.getConnection(0)) {
             Assert.assertFalse(conn.exists("junit.item"));
+        }
+        try (final Jedis conn = this.playRedis.getConnection(-1)) {
+            Assert.assertTrue(conn.exists("junit.item"));
         }
     }
 
@@ -231,6 +234,16 @@ public class RedisTest extends AbstractRedisTest {
         final Long l = this.playRedis.getOrElse("junit.item", new TypeReference<Long>() {
         }, () -> 42L);
         Assert.assertEquals(42, l.longValue());
+
+        try {
+            this.playRedis.getOrElse("junit.item18", new TypeReference<Long>() {
+            }, () -> {
+                final Object o = "cast-error";
+                return (Long) o;
+            });
+            Assert.fail();
+        } catch (final Exception ignore) {
+        }
     }
 
     /**
@@ -255,5 +268,16 @@ public class RedisTest extends AbstractRedisTest {
         Thread.sleep(2500);
         counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(4, counter.longValue());
+    }
+
+    /**
+     * @since 17.11.18
+     */
+    @Test
+    public void redisTest_009_resetConnectionsPool() throws InterruptedException {
+        this.playRedis.resetConnectionsPool();
+        this.playRedis.resetConnectionsPool();
+        this.playRedis.stopHook();
+        this.playRedis.resetConnectionsPool();
     }
 }

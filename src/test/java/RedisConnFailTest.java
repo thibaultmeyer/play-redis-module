@@ -40,7 +40,7 @@ import static org.mockito.Mockito.mock;
  * RedisConnFailTest.
  *
  * @author Thibault Meyer
- * @version 17.06.26
+ * @version 17.08.24
  * @since 17.06.26
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -76,21 +76,13 @@ public class RedisConnFailTest {
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
                         )
                     );
-                    put("redis.default.host", "127.0.0.1");
-                    put("redis.default.port", 6379);
-                    put("redis.default.password", "false-password");
+                    put("redis.host", "127.0.0.1");
+                    put("redis.port", 6379);
+                    put("redis.password", "false-password");
                 }});
             Assert.assertEquals(
-                0,
-                this.application.config().getLong("redis.default.db.default")
-            );
-            Assert.assertEquals(
-                "127.0.0.1",
-                this.application.config().getString("redis.default.host")
-            );
-            Assert.assertEquals(
                 "false-password",
-                this.application.config().getString("redis.default.password")
+                this.application.config().getString("redis.password")
             );
             this.playRedis = new PlayRedisImpl(
                 mock(ApplicationLifecycle.class),
@@ -128,7 +120,7 @@ public class RedisConnFailTest {
         try {
             this.playRedis.getConnection();
         } catch (JedisConnectionException ex) {
-            if (!ex.getCause().getMessage().startsWith("ERR Client sent AUTH")) {
+            if (!ex.getCause().getMessage().startsWith("ERR AUTH")) {
                 Assert.fail();
             } else {
                 return;
