@@ -66,6 +66,7 @@ public class RedisInitFailureTest {
             Assert.fail();
         } catch (final ConfigException ignore) {
         }
+
         try {
             new AbstractRedisTest(0) {{
             }}.initializeRedisModule();

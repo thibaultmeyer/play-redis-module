@@ -106,7 +106,7 @@ public class RedisConnFailTest {
                         .toCompletableFuture()
                         .get()
                 );
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException ignore) {
                 Assert.fail();
             }
         }
@@ -119,7 +119,7 @@ public class RedisConnFailTest {
     public void redisConnFailTest_001_password_not_set() {
         try {
             this.playRedis.getConnection();
-        } catch (JedisConnectionException ex) {
+        } catch (final JedisConnectionException ex) {
             if (ex.getCause().getMessage().contains("AUTH")) {
                 return;
             } else {

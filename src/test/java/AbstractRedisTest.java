@@ -127,11 +127,13 @@ public class AbstractRedisTest {
                 redisPort.longValue(),
                 this.application.config().getLong("redis.port")
             );
+
             this.playRedis = new PlayRedisImpl(
                 mock(ApplicationLifecycle.class),
                 this.application.config()
             );
             Assert.assertNotEquals(null, this.playRedis);
+
             try {
                 this.playRedis.remove(
                     "junit.lock",
@@ -139,7 +141,7 @@ public class AbstractRedisTest {
                     "junit.item2",
                     "junit.counter"
                 );
-            } catch (JedisConnectionException ignore) {
+            } catch (final JedisConnectionException ignore) {
             }
         }
     }
@@ -158,7 +160,7 @@ public class AbstractRedisTest {
                         .toCompletableFuture()
                         .get()
                 );
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (final InterruptedException | ExecutionException ignore) {
                 Assert.fail();
             }
         }

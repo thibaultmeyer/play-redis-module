@@ -66,7 +66,7 @@ public class RedisFailureTest extends AbstractRedisTest {
             this.playRedis.set("junit.item", new TypeReference<String>() {
             }, "Hello World!");
             Assert.fail();
-        } catch (JedisConnectionException ignore) {
+        } catch (final JedisConnectionException ignore) {
         }
     }
 }

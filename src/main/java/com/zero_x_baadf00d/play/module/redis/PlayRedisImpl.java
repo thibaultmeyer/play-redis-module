@@ -690,7 +690,7 @@ public class PlayRedisImpl implements PlayRedis {
                     objects.add(reader.readValue(s));
                 }
             }
-        } catch (IOException | NullPointerException ex) {
+        } catch (final IOException | NullPointerException ex) {
             PlayRedisImpl.LOG.error("Can't get object from list", ex);
         }
         return objects;
