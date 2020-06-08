@@ -91,7 +91,7 @@ public interface PlayRedis {
      * @return object or {@code null}
      * @since 17.08.20
      */
-    <T> T get(final String key, final Class<?> clazz);
+    <T> T get(final String key, final Class<T> clazz);
 
     /**
      * Retrieves an object by key.
@@ -113,7 +113,7 @@ public interface PlayRedis {
      * @param <T>           Generic type of something
      * @since 16.03.31
      */
-    <T> void set(final String key, final TypeReference<T> typeReference, final Object value);
+    <T> void set(final String key, final TypeReference<T> typeReference, final T value);
 
     /**
      * Sets a value with expiration.
@@ -125,7 +125,7 @@ public interface PlayRedis {
      * @param <T>           Generic type of something
      * @since 16.03.31
      */
-    <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration);
+    <T> void set(final String key, final TypeReference<T> typeReference, final T value, final int expiration);
 
     /**
      * Sets a value without expiration.
@@ -135,7 +135,7 @@ public interface PlayRedis {
      * @param value The value to set
      * @since 17.08.20
      */
-    void set(final String key, final Class<?> clazz, final Object value);
+    <T> void set(final String key, final Class<T> clazz, final T value);
 
     /**
      * Sets a value with expiration.
@@ -146,7 +146,7 @@ public interface PlayRedis {
      * @param expiration expiration in seconds
      * @since 17.08.20
      */
-    void set(final String key, final Class<?> clazz, final Object value, final int expiration);
+    <T> void set(final String key, final Class<T> clazz, final T value, final int expiration);
 
     /**
      * Sets a value without expiration.
@@ -207,7 +207,7 @@ public interface PlayRedis {
      * @return value
      * @since 17.08.20
      */
-    <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block);
+    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block);
 
     /**
      * Retrieve a value from the cache, or set it from a default
@@ -221,7 +221,7 @@ public interface PlayRedis {
      * @return value
      * @since 17.08.20
      */
-    <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block, final int expiration);
+    <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration);
 
     /**
      * Retrieve a value from the cache, or set it from a default
@@ -306,7 +306,7 @@ public interface PlayRedis {
      * @param value The value to add in the list
      * @since 17.08.20
      */
-    void addInList(final String key, final Class<?> clazz, final Object value);
+    <T> void addInList(final String key, final Class<T> clazz, final T value);
 
     /**
      * Add a value in a list.
@@ -317,7 +317,7 @@ public interface PlayRedis {
      * @param maxItem The number of entries to keep in list
      * @since 17.08.20
      */
-    void addInList(final String key, final Class<?> clazz, final Object value, final int maxItem);
+    <T> void addInList(final String key, final Class<T> clazz, final T value, final int maxItem);
 
     /**
      * Add a value in a list.
@@ -373,7 +373,7 @@ public interface PlayRedis {
      * @return The values list
      * @since 17.08.20
      */
-    <T> List<T> getFromList(final String key, final Class<?> clazz);
+    <T> List<T> getFromList(final String key, final Class<T> clazz);
 
     /**
      * Get values from a list.
@@ -386,7 +386,7 @@ public interface PlayRedis {
      * @return The values list
      * @since 17.08.20
      */
-    <T> List<T> getFromList(final String key, final Class<?> clazz, final int offset, final int count);
+    <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count);
 
     /**
      * Get values from a list.

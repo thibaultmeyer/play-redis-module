@@ -394,7 +394,7 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> T get(final String key, final Class<?> clazz) {
+    public <T> T get(final String key, final Class<T> clazz) {
         return this.get(key, Json.mapper().readerFor(clazz));
     }
 
@@ -429,22 +429,22 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value) {
+    public <T> void set(final String key, final TypeReference<T> typeReference, final T value) {
         this.set(key, typeReference, value, 0);
     }
 
     @Override
-    public <T> void set(final String key, final TypeReference<T> typeReference, final Object value, final int expiration) {
+    public <T> void set(final String key, final TypeReference<T> typeReference, final T value, final int expiration) {
         this.set(key, Json.mapper().writerFor(typeReference), value, expiration);
     }
 
     @Override
-    public void set(final String key, final Class<?> clazz, final Object value) {
+    public <T> void set(final String key, final Class<T> clazz, final T value) {
         this.set(key, clazz, value, 0);
     }
 
     @Override
-    public void set(final String key, final Class<?> clazz, final Object value, final int expiration) {
+    public <T> void set(final String key, final Class<T> clazz, final T value, final int expiration) {
         this.set(key, Json.mapper().writerFor(clazz), value, expiration);
     }
 
@@ -492,12 +492,12 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block) {
+    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block) {
         return this.getOrElse(key, clazz, block, 0);
     }
 
     @Override
-    public <T> T getOrElse(final String key, final Class<?> clazz, final Callable<T> block, final int expiration) {
+    public <T> T getOrElse(final String key, final Class<T> clazz, final Callable<T> block, final int expiration) {
         return this.getOrElse(key, Json.mapper().readerFor(clazz), Json.mapper().writerFor(clazz), block, expiration);
     }
 
@@ -575,12 +575,12 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public void addInList(final String key, final Class<?> clazz, final Object value) {
+    public <T> void addInList(final String key, final Class<T> clazz, final T value) {
         this.addInList(key, Json.mapper().writerFor(clazz), value);
     }
 
     @Override
-    public void addInList(final String key, final Class<?> clazz, final Object value,
+    public <T> void addInList(final String key, final Class<T> clazz, final T value,
                           final int maxItem) {
         this.addInList(key, Json.mapper().writerFor(clazz), value, maxItem);
     }
@@ -648,12 +648,12 @@ public class PlayRedisImpl implements PlayRedis {
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final Class<?> clazz) {
+    public <T> List<T> getFromList(final String key, final Class<T> clazz) {
         return this.getFromList(key, clazz, 0, -1);
     }
 
     @Override
-    public <T> List<T> getFromList(final String key, final Class<?> clazz, final int offset, final int count) {
+    public <T> List<T> getFromList(final String key, final Class<T> clazz, final int offset, final int count) {
         return this.getFromList(key, Json.mapper().readerFor(clazz), offset, count);
     }
 
