@@ -175,7 +175,7 @@ public class RedisInitFailureTest {
     public void redisInitFailureTest_009_defaultdb_cant_lt_zero() {
         try {
             new AbstractRedisTest(6379, new HashMap<String, Object>() {{
-                put("redis.db", -1);
+                put("redis.defaultdb", -1);
             }}) {{
             }}.initializeRedisModule();
             Assert.fail();

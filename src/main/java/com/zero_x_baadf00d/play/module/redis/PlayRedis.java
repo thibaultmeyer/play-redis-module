@@ -133,6 +133,7 @@ public interface PlayRedis {
      * @param key   Item key
      * @param clazz The object class
      * @param value The value to set
+     * @param <T>   Generic type of something
      * @since 17.08.20
      */
     <T> void set(final String key, final Class<T> clazz, final T value);
@@ -144,6 +145,7 @@ public interface PlayRedis {
      * @param clazz      The object class
      * @param value      The value to set
      * @param expiration expiration in seconds
+     * @param <T>        Generic type of something
      * @since 17.08.20
      */
     <T> void set(final String key, final Class<T> clazz, final T value, final int expiration);
@@ -304,6 +306,7 @@ public interface PlayRedis {
      * @param key   The list key
      * @param clazz The object class
      * @param value The value to add in the list
+     * @param <T>   Generic type of something implementing {@code java.io.Serializable}
      * @since 17.08.20
      */
     <T> void addInList(final String key, final Class<T> clazz, final T value);
@@ -315,6 +318,7 @@ public interface PlayRedis {
      * @param clazz   The object class
      * @param value   The value to add in the list
      * @param maxItem The number of entries to keep in list
+     * @param <T>     Generic type of something implementing {@code java.io.Serializable}
      * @since 17.08.20
      */
     <T> void addInList(final String key, final Class<T> clazz, final T value, final int maxItem);
