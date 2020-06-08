@@ -40,7 +40,7 @@ import static org.mockito.Mockito.mock;
  * RedisConnFailTest.
  *
  * @author Thibault Meyer
- * @version 17.08.24
+ * @version 20.06.08
  * @since 17.06.26
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -116,14 +116,14 @@ public class RedisConnFailTest {
      * @since 17.06.26
      */
     @Test
-    public void redisConnTailTest_001_password_not_set() {
+    public void redisConnFailTest_001_password_not_set() {
         try {
             this.playRedis.getConnection();
         } catch (JedisConnectionException ex) {
-            if (!ex.getCause().getMessage().startsWith("ERR AUTH")) {
-                Assert.fail();
-            } else {
+            if (ex.getCause().getMessage().contains("AUTH")) {
                 return;
+            } else {
+                Assert.fail();
             }
         }
         Assert.fail();
