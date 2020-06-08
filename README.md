@@ -1,7 +1,7 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-19.01-orange.svg)](https://github.com/thibaultmeyer/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-20.06-orange.svg)](https://github.com/thibaultmeyer/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/thibaultmeyer/play-redis-module.svg)](https://jitpack.io/#thibaultmeyer/play-redis-module)
 [![Build](https://api.travis-ci.org/thibaultmeyer/play-redis-module.svg)](https://travis-ci.org/thibaultmeyer/play-redis-module)
 [![codecov](https://codecov.io/gh/thibaultmeyer/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/thibaultmeyer/play-redis-module)
