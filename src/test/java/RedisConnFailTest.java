@@ -120,7 +120,7 @@ public class RedisConnFailTest {
         try {
             this.playRedis.getConnection();
         } catch (JedisConnectionException ex) {
-            if (!ex.getCause().getMessage().startsWith("ERR Client sent AUTH")) {
+            if (!ex.getCause().getMessage().startsWith("ERR AUTH")) {
                 Assert.fail();
             } else {
                 return;

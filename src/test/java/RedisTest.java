@@ -67,7 +67,7 @@ public class RedisTest extends AbstractRedisTest {
         Assert.assertEquals(1,
             module.bindings(
                 mock(Environment.class),
-                this.application.configuration().getWrappedConfiguration()
+                this.application.asScala().configuration()
             ).length()
         );
     }
