@@ -117,6 +117,7 @@ public class AbstractRedisTest {
                     put("redis.defaultdb", 1);
                     put("redis.host", "127.0.0.1");
                     put("redis.port", redisPort);
+                    put("redis.reinit-pool-cooldown", 5000);
                     if (extraConfig != null) {
                         for (final Map.Entry<String, Object> e : extraConfig.entrySet()) {
                             put(e.getKey(), e.getValue());

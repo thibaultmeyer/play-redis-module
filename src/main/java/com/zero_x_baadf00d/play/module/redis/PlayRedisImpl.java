@@ -52,7 +52,7 @@ import java.util.concurrent.CompletionStage;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 20.06.08
+ * @version 20.06.09
  * @see PlayRedis
  * @since 16.03.09
  */
@@ -311,7 +311,7 @@ public class PlayRedisImpl implements PlayRedis {
      */
     private boolean canResetConnectionsPool() {
         final long ts = System.currentTimeMillis();
-        if (this.lastPoolInitialization == 0 || this.lastPoolInitialization + this.redisReinitPoolCooldown > ts) {
+        if (this.lastPoolInitialization == 0 || this.lastPoolInitialization + this.redisReinitPoolCooldown < ts) {
             this.lastPoolInitialization = ts;
             return true;
         }

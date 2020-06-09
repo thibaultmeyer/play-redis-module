@@ -43,7 +43,7 @@ import static org.mockito.Mockito.mock;
  *
  * @author Thibault Meyer
  * @author Pierre Adam
- * @version 17.11.18
+ * @version 20.06.09
  * @since 16.11.13
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -274,7 +274,7 @@ public class RedisTest extends AbstractRedisTest {
      * @since 17.11.18
      */
     @Test
-    public void redisTest_009_resetConnectionsPool() throws InterruptedException {
+    public void redisTest_009_resetConnectionsPool() {
         this.playRedis.resetConnectionsPool();
         this.playRedis.resetConnectionsPool();
         this.playRedis.stopHook();
