@@ -51,7 +51,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     private final PlayRedis playRedis;
 
     @Inject
-    public SyncCaheRedisImpl(PlayRedis playRedis) {
+    public SyncCaheRedisImpl(final PlayRedis playRedis) {
         this.playRedis = playRedis;
     }
 
@@ -66,13 +66,13 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     }
 
     @Override
-    public <T> Optional<T> get(String key) {
+    public <T> Optional<T> get(final String key) {
         return Optional.ofNullable(this.playRedis.get(key, new TypeReference<T>() {
         }));
     }
 
     @Override
-    public <T> T getOrElseUpdate(String key, Callable<T> callable, int expiration) {
+    public <T> T getOrElseUpdate(final String key, final Callable<T> callable, final int expiration) {
         final Optional<T> optional = this.get(key);
         return optional.orElseGet(() -> {
             try {
@@ -87,7 +87,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     }
 
     @Override
-    public <T> T getOrElseUpdate(String key, Callable<T> callable) {
+    public <T> T getOrElseUpdate(final String key, final Callable<T> callable) {
         final Optional<T> optional = this.get(key);
         return optional.orElseGet(() -> {
             try {
@@ -102,7 +102,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     }
 
     @Override
-    public void set(String key, Object o, int expiration) {
+    public void set(final String key, final Object o, final int expiration) {
         if (o instanceof Long) {
             this.playRedis.set(key, Long.class, (Long) o, expiration);
         } else {
@@ -112,12 +112,12 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     }
 
     @Override
-    public void set(String key, Object o) {
+    public void set(final String key, final Object o) {
         this.set(key, o, 0);
     }
 
     @Override
-    public void remove(String key) {
+    public void remove(final String key) {
         this.playRedis.remove(key);
     }
 
