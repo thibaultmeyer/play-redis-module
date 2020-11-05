@@ -23,14 +23,17 @@
  */
 
 import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
+import com.zero_x_baadf00d.play.module.redis.cache.SyncCaheRedisImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import play.Application;
+import play.cache.SyncCacheApi;
 import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +72,13 @@ public class AbstractRedisTest {
     protected PlayRedisImpl playRedis;
 
     /**
+     * Handle to the Sync Cache Redis module.
+     *
+     * @since 20.11.05
+     */
+    protected SyncCacheApi cacheApi;
+
+    /**
      * Handle to the current application instance.
      *
      * @since 17.03.25
@@ -99,7 +109,7 @@ public class AbstractRedisTest {
     }
 
     /**
-     * Initialize Redis module.
+     * Initialize Redis module and SyncCache module.
      *
      * @since 17.03.26
      */
@@ -110,8 +120,9 @@ public class AbstractRedisTest {
                 fakeApplication(new HashMap<String, Object>() {{
                     put(
                         "play.modules.disabled",
-                        Collections.singletonList(
-                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
+                        Arrays.asList(
+                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule",
+                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule"
                         )
                     );
                     put("redis.defaultdb", 1);
@@ -134,6 +145,9 @@ public class AbstractRedisTest {
                 this.application.config()
             );
             Assert.assertNotEquals(null, this.playRedis);
+
+            this.cacheApi = new SyncCaheRedisImpl(this.playRedis);
+            Assert.assertNotEquals(null, this.cacheApi);
 
             try {
                 this.playRedis.remove(
