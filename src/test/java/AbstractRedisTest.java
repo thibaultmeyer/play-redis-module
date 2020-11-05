@@ -23,7 +23,7 @@
  */
 
 import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
-import com.zero_x_baadf00d.play.module.redis.cache.SyncCaheRedisImpl;
+import com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,7 +34,6 @@ import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -122,7 +121,8 @@ public class AbstractRedisTest {
                         "play.modules.disabled",
                         Arrays.asList(
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule",
-                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule"
+                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule",
+                            "com.zero_x_baadf00d.play.module.redis.cache.AsyncCacheRedisModule"
                         )
                     );
                     put("redis.defaultdb", 1);
@@ -146,7 +146,7 @@ public class AbstractRedisTest {
             );
             Assert.assertNotEquals(null, this.playRedis);
 
-            this.cacheApi = new SyncCaheRedisImpl(this.playRedis);
+            this.cacheApi = new SyncCacheRedisImpl(this.playRedis);
             Assert.assertNotEquals(null, this.cacheApi);
 
             try {

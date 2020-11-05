@@ -43,6 +43,6 @@ public class SyncCacheRedisModule extends Module {
 
     @Override
     public Seq<Binding<?>> bindings(final Environment environment, final Configuration configuration) {
-        return seq(bind(SyncCacheApi.class).to(SyncCaheRedisImpl.class));
+        return seq(bind(SyncCacheApi.class).to(SyncCacheRedisImpl.class));
     }
 }

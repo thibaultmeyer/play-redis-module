@@ -23,9 +23,8 @@
  */
 
 import com.zero_x_baadf00d.play.module.redis.PlayRedis;
-import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
+import com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisImpl;
 import com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule;
-import com.zero_x_baadf00d.play.module.redis.cache.SyncCaheRedisImpl;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -75,7 +74,7 @@ public class SyncCacheRedisTest extends AbstractRedisTest {
      */
     @Test
     public void cacheRedisTest_001_playRedisImpl() {
-        final PlayRedis playRedis = ((SyncCaheRedisImpl) this.cacheApi).asPlayRedis();
+        final PlayRedis playRedis = ((SyncCacheRedisImpl) this.cacheApi).asPlayRedis();
         Assert.assertNotNull(playRedis);
     }
 

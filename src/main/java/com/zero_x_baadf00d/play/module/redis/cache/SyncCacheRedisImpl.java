@@ -41,7 +41,7 @@ import java.util.concurrent.Callable;
  * @since 20.11.05
  */
 @Singleton
-public class SyncCaheRedisImpl implements SyncCacheApi {
+public class SyncCacheRedisImpl implements SyncCacheApi {
 
     /**
      * The {@link PlayRedis} injected implementation.
@@ -51,7 +51,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
     private final PlayRedis playRedis;
 
     @Inject
-    public SyncCaheRedisImpl(final PlayRedis playRedis) {
+    public SyncCacheRedisImpl(final PlayRedis playRedis) {
         this.playRedis = playRedis;
     }
 
@@ -88,17 +88,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
 
     @Override
     public <T> T getOrElseUpdate(final String key, final Callable<T> callable) {
-        final Optional<T> optional = this.get(key);
-        return optional.orElseGet(() -> {
-            try {
-                final T obj = callable.call();
-                this.set(key, obj);
-                return obj;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
-        });
+        return this.getOrElseUpdate(key, callable, 0);
     }
 
     @Override
