@@ -76,7 +76,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
         final Optional<T> optional = this.get(key);
         return optional.orElseGet(() -> {
             try {
-                T obj = callable.call();
+                final T obj = callable.call();
                 this.set(key, obj, expiration);
                 return obj;
             } catch (Exception e) {
@@ -91,7 +91,7 @@ public class SyncCaheRedisImpl implements SyncCacheApi {
         final Optional<T> optional = this.get(key);
         return optional.orElseGet(() -> {
             try {
-                T obj = callable.call();
+                final T obj = callable.call();
                 this.set(key, obj);
                 return obj;
             } catch (Exception e) {
