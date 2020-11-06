@@ -30,6 +30,7 @@ import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
@@ -72,8 +73,9 @@ public class RedisConnFailTest {
                 fakeApplication(new HashMap<String, Object>() {{
                     put(
                         "play.modules.disabled",
-                        Collections.singletonList(
-                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule"
+                        Arrays.asList(
+                            "com.zero_x_baadf00d.play.module.redis.PlayRedisModule",
+                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule"
                         )
                     );
                     put("redis.host", "127.0.0.1");

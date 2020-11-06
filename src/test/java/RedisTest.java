@@ -131,7 +131,7 @@ public class RedisTest extends AbstractRedisTest {
         this.playRedis.set("junit.item", new TypeReference<String>() {
         }, "Hello World!", 2);
         Assert.assertTrue(this.playRedis.exists("junit.item"));
-        Thread.sleep(2500);
+        Thread.sleep(3000);
         Assert.assertFalse(this.playRedis.exists("junit.item"));
     }
 
@@ -253,7 +253,7 @@ public class RedisTest extends AbstractRedisTest {
     public void redisTest_008_increment() throws InterruptedException {
         Long counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(1, counter.longValue());
-        Thread.sleep(2500);
+        Thread.sleep(3000);
         counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(1, counter.longValue());
         this.playRedis.remove("junit.counter");
@@ -265,7 +265,7 @@ public class RedisTest extends AbstractRedisTest {
 
         counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(3, counter.longValue());
-        Thread.sleep(2500);
+        Thread.sleep(3000);
         counter = this.playRedis.increment("junit.counter", 2);
         Assert.assertEquals(4, counter.longValue());
     }
