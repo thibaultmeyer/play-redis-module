@@ -148,14 +148,21 @@ public class SyncCacheRedisTest extends AbstractRedisTest {
             // This test will raise a Cast exception on the method "get"
             final Long l = this.cacheApi.getOrElseUpdate("junit.item", () -> 42L);
             Assert.assertEquals(42, l.longValue());
-
-            this.cacheApi.getOrElseUpdate("junit.item18", () -> {
-                final Object o = "cast-error";
-                return (Long) o;
-            });
             Assert.fail();
         } catch (final Exception ignore) {
         }
+
+        this.cacheApi.getOrElseUpdate("junit.item18", () -> {
+            try {
+                // This test will raise a Cast exception on the method "get"
+                final Object o = "cast-error";
+                Long o1 = (Long) o;
+                Assert.fail();
+                return o1;
+            } catch (final Exception ignore) {
+                return null;
+            }
+        });
     }
 
 }
