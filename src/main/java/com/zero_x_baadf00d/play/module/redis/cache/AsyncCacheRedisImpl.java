@@ -111,7 +111,7 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     }
 
     @Override
-    public CompletionStage<Done> set(final String key, Object o, final int expiration) {
+    public CompletionStage<Done> set(final String key, final Object o, final int expiration) {
         return supplyAsync(() -> {
             this.sync().set(key, o, expiration);
             this.keys.add(key);
@@ -120,7 +120,7 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     }
 
     @Override
-    public CompletionStage<Done> set(final String key, Object o) {
+    public CompletionStage<Done> set(final String key, final Object o) {
         return this.set(key, o, 0);
     }
 
