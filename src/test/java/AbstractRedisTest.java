@@ -23,11 +23,13 @@
  */
 
 import com.zero_x_baadf00d.play.module.redis.PlayRedisImpl;
+import com.zero_x_baadf00d.play.module.redis.cache.AsyncCacheRedisImpl;
 import com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisImpl;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import play.Application;
+import play.cache.AsyncCacheApi;
 import play.cache.SyncCacheApi;
 import play.inject.ApplicationLifecycle;
 import play.test.Helpers;
@@ -76,6 +78,13 @@ public class AbstractRedisTest {
      * @since 20.11.05
      */
     protected SyncCacheApi cacheApi;
+
+    /**
+     * Handle to the Async Cache Redis module.
+     *
+     * @since 20.11.05
+     */
+    protected AsyncCacheApi asyncCacheApi;
 
     /**
      * Handle to the current application instance.
@@ -148,6 +157,9 @@ public class AbstractRedisTest {
 
             this.cacheApi = new SyncCacheRedisImpl(this.playRedis);
             Assert.assertNotEquals(null, this.cacheApi);
+
+            this.asyncCacheApi = new AsyncCacheRedisImpl((SyncCacheRedisImpl) this.cacheApi);
+            Assert.assertNotEquals(null, this.asyncCacheApi);
 
             try {
                 this.playRedis.remove(

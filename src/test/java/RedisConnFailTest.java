@@ -31,7 +31,6 @@ import play.test.Helpers;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -75,7 +74,8 @@ public class RedisConnFailTest {
                         "play.modules.disabled",
                         Arrays.asList(
                             "com.zero_x_baadf00d.play.module.redis.PlayRedisModule",
-                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule"
+                            "com.zero_x_baadf00d.play.module.redis.cache.SyncCacheRedisModule",
+                            "com.zero_x_baadf00d.play.module.redis.cache.AsyncCacheRedisModule"
                         )
                     );
                     put("redis.host", "127.0.0.1");
