@@ -27,12 +27,11 @@ import akka.Done;
 import com.zero_x_baadf00d.play.module.redis.PlayRedis;
 import play.cache.AsyncCacheApi;
 import play.cache.SyncCacheApi;
+import redis.clients.jedis.Jedis;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -53,11 +52,11 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 public class AsyncCacheRedisImpl implements AsyncCacheApi {
 
     /**
-     * Keep all keys saved into cache.
+     * Default prefix mapping content saved in Redis.
      *
      * @since 20.11.05
      */
-    private final Set<String> keys = new HashSet<>(100);
+    private static final String DEFAULT_PREFIX = "play.cache.";
 
     /**
      * The {@link PlayRedis} injected implementation.
@@ -83,13 +82,13 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
 
     @Override
     public <T> CompletionStage<Optional<T>> get(final String key) {
-        return supplyAsync(() -> this.sync().get(key));
+        return supplyAsync(() -> this.sync().get(this.prepareKey(key)));
     }
 
     @Override
     public <T> CompletionStage<T> getOrElseUpdate(final String key, final Callable<CompletionStage<T>> callable,
                                                   final int expiration) {
-        return CompletableFuture.supplyAsync(() -> this.sync().<T>get(key))
+        return CompletableFuture.supplyAsync(() -> this.sync().<T>get(this.prepareKey(key)))
             .thenCompose(optional -> {
                 if (optional.isPresent())
                     return completedFuture(optional.get());
@@ -113,8 +112,7 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     @Override
     public CompletionStage<Done> set(final String key, final Object o, final int expiration) {
         return supplyAsync(() -> {
-            this.sync().set(key, o, expiration);
-            this.keys.add(key);
+            this.sync().set(this.prepareKey(key), o, expiration);
             return Done.done();
         });
     }
@@ -127,8 +125,7 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     @Override
     public CompletionStage<Done> remove(final String key) {
         return supplyAsync(() -> {
-            this.sync().remove(key);
-            this.keys.remove(key);
+            this.sync().remove(this.prepareKey(key));
             return Done.done();
         });
     }
@@ -136,7 +133,11 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     @Override
     public CompletionStage<Done> removeAll() {
         return supplyAsync(() -> {
-            this.keys.forEach(this::remove);
+            try (final Jedis connection = this.asPlayRedis().getConnection(0)) {
+                // Search all keys in Redis.
+                // https://redis.io/commands/keys
+                connection.keys(DEFAULT_PREFIX + "??").forEach(this::remove);
+            }
             return Done.done();
         });
     }
@@ -145,4 +146,16 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
     public SyncCacheApi sync() {
         return this.syncCacheApi;
     }
+
+    /**
+     * Return the prepared key for be used on redis with a default prefix.
+     *
+     * @param key Content key.
+     * @return Key with prefix.
+     * @since 20.11.05
+     */
+    private String prepareKey(final String key) {
+        return DEFAULT_PREFIX + key;
+    }
+
 }
