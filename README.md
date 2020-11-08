@@ -69,7 +69,7 @@ Redis module for Play Framework 2
         }
 
         public Result index() {
-            final String token = this.cacheApi.getOrElse("key", () -> "new-token", 60);
+            final String token = this.cacheApi.getOrElseUpdate("key", () -> "new-token", 60);
             return ok(token);
         }
     }
