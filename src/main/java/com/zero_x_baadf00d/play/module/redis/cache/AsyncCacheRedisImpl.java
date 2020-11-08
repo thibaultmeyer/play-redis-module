@@ -136,7 +136,7 @@ public class AsyncCacheRedisImpl implements AsyncCacheApi {
             try (final Jedis connection = this.asPlayRedis().getConnection(0)) {
                 // Search all keys in Redis.
                 // https://redis.io/commands/keys
-                connection.keys(DEFAULT_PREFIX + "??").forEach(this::remove);
+                connection.keys(DEFAULT_PREFIX + "*").forEach(this::remove);
             }
             return Done.done();
         });
