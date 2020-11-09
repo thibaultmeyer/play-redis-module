@@ -1,7 +1,7 @@
 # Play Redis Module
 
 
-[![Latest release](https://img.shields.io/badge/latest_release-20.06-orange.svg)](https://github.com/thibaultmeyer/play-redis-module/releases)
+[![Latest release](https://img.shields.io/badge/latest_release-20.11-orange.svg)](https://github.com/thibaultmeyer/play-redis-module/releases)
 [![JitPack](https://jitpack.io/v/thibaultmeyer/play-redis-module.svg)](https://jitpack.io/#thibaultmeyer/play-redis-module)
 [![Build](https://api.travis-ci.org/thibaultmeyer/play-redis-module.svg)](https://travis-ci.org/thibaultmeyer/play-redis-module)
 [![codecov](https://codecov.io/gh/thibaultmeyer/play-redis-module/branch/develop/graph/badge.svg)](https://codecov.io/gh/thibaultmeyer/play-redis-module)
@@ -57,6 +57,27 @@ Redis module for Play Framework 2
 #### Example 1
 
 ```java
+    import play.cache.SyncCacheApi;
+    
+    public class MyController extends Controller {
+
+        private final SyncCacheApi cacheApi;
+
+        @Inject
+        public MyController(final SyncCacheApi cacheApi) {
+            this.cacheApi = cacheApi;
+        }
+
+        public Result index() {
+            final String token = this.cacheApi.getOrElseUpdate("key", () -> "new-token", 60);
+            return ok(token);
+        }
+    }
+```
+
+#### Example 2
+
+```java
     public class MyController extends Controller {
 
         private final PlayRedis playRedis;
@@ -76,7 +97,7 @@ Redis module for Play Framework 2
 ```
 
 
-#### Example 2
+#### Example 3
 
 ```java
     public class MyController extends Controller {
@@ -97,7 +118,7 @@ Redis module for Play Framework 2
 ```
 
 
-#### Example 3
+#### Example 4
 
 ```java
     final PlayRedis playRedis = Play.application().injector().instanceOf(PlayRedis.class);
